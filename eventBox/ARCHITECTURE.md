@@ -26,8 +26,8 @@ Design constraints that drive most decisions:
 | Hard to lift the source | Not guaranteed: AGP ignores `isMinifyEnabled` for the published AAR, so obfuscation comes from the consuming app's R8, which honours the keep rules |
 
 Module facts: library `com.marocsbhai.eventbox`, `minSdk 21`, `compileSdk 37`, Java 11,
-`kotlinx-coroutines-android` exposed as `api` (StateFlow in the public API). Published to JitPack as
-`com.github.MarocsBhai:event-box` (version comes from the git tag via `VERSION`).
+`kotlinx-coroutines-android` exposed as `api` (StateFlow in the public API). Published privately to GitHub Packages as
+`com.marocsbhai:event-box` (version comes from the git tag via `VERSION`).
 
 ---
 
@@ -200,8 +200,9 @@ End of session (any of)
   `OGEventBoxValidator`; everything else is repackaged into `com.marocsbhai.eventbox.a`,
   renamed, and stripped of Kotlin intrinsic null checks and `Log.d/v`.
 - `consumer-rules.pro`: the same three keep rules only, shipped as `proguard.txt` in the AAR.
-- Publishing: `jitpack.yml` runs `publishReleasePublicationToMavenLocal`; coordinates
-  `com.github.MarocsBhai:event-box`, version from the `VERSION` env var (the git tag).
+- Publishing: `.github/workflows/publish.yml` runs on a pushed tag and calls
+  `publishReleasePublicationToGitHubPackagesRepository`; coordinates `com.marocsbhai:event-box`,
+  version from the `VERSION` env var (the git tag).
 - If you add a **public** class, add it to *both* rules files.
 
 ---

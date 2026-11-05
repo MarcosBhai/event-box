@@ -1,6 +1,6 @@
 # Event Box
 
-[![JitPack](https://jitpack.io/v/MarocsBhai/event-box.svg)](https://jitpack.io/#MarocsBhai/event-box)
+[![Publish](https://github.com/MarocsBhai/event-box/actions/workflows/publish.yml/badge.svg)](https://github.com/MarocsBhai/event-box/actions/workflows/publish.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![minSdk](https://img.shields.io/badge/minSdk-21-brightgreen.svg)](#1-add-the-dependency)
 [![Kotlin](https://img.shields.io/badge/Kotlin-%20%7C%20Java-7F52FF.svg?logo=kotlin&logoColor=white)](#4-log-your-events)
@@ -53,27 +53,60 @@ parameters) are often found only after release.
 
 ## 1. Add the dependency
 
-In `settings.gradle.kts`:
+Event Box is a **private** package hosted on GitHub Packages. To download it you need a GitHub
+account with read access to `MarocsBhai/event-box` and a **Personal Access Token (classic)** with
+the `read:packages` scope (GitHub → Settings → Developer settings → Personal access tokens).
+GitHub account passwords are not accepted.
+
+**Step 1. Save your credentials outside the project**, in `~/.gradle/gradle.properties`
+(Windows: `C:\Users\<you>\.gradle\gradle.properties`). Never commit this file or token.
+
+```properties
+gpr.user=YOUR_GITHUB_USERNAME
+gpr.key=ghp_yourPersonalAccessToken
+```
+
+On CI, set the environment variables `GPR_USER` and `GPR_KEY` instead.
+
+**Step 2. Add the repository** in `settings.gradle.kts`:
 
 ```kotlin
 dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven("https://jitpack.io")
+        maven {
+            url = uri("https://maven.pkg.github.com/MarocsBhai/event-box")
+            credentials {
+                username = providers.gradleProperty("gpr.user").orNull ?: System.getenv("GPR_USER")
+                password = providers.gradleProperty("gpr.key").orNull ?: System.getenv("GPR_KEY")
+            }
+        }
     }
 }
 ```
 
-In your app's `build.gradle.kts`:
+**Step 3. Add the dependency** in your app's `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.github.MarocsBhai:event-box:1.0.0")
+    implementation("com.marocsbhai:event-box:1.0.0")
 }
 ```
 
 The library supports compileSdk 36+ and AGP 9.0+.
+
+### Publishing a new version (maintainers)
+
+Push a version tag; the `Publish to GitHub Packages` workflow builds, tests and publishes it:
+
+```bash
+git tag 1.0.1
+git push origin 1.0.1
+```
+
+You can also run the workflow by hand from the **Actions** tab. A version number can only be
+published once, so always use a new tag.
 
 ## 2. Set it up
 

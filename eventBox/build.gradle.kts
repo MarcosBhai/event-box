@@ -53,9 +53,10 @@ afterEvaluate {
         publications {
             register<MavenPublication>("release") {
                 from(components["release"])
-                groupId = "com.github.MarocsBhai"
+                groupId = "com.marocsbhai"
                 artifactId = "event-box"
-                version = System.getenv("VERSION") ?: "1.0.0" // JitPack sets VERSION to the git tag
+                // The publish workflow sets VERSION to the git tag (e.g. 1.0.0).
+                version = System.getenv("VERSION") ?: "1.0.0"
 
                 pom {
                     name.set("Event Box")
@@ -66,6 +67,21 @@ afterEvaluate {
                             url.set("https://opensource.org/licenses/MIT")
                         }
                     }
+                }
+            }
+        }
+        repositories {
+            // Private GitHub Packages registry of this repo.
+            // In GitHub Actions: GITHUB_ACTOR / GITHUB_TOKEN are provided automatically.
+            // Locally: put gpr.user / gpr.key in ~/.gradle/gradle.properties (never in the project).
+            maven {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/MarocsBhai/event-box")
+                credentials {
+                    username = System.getenv("GITHUB_ACTOR")
+                        ?: providers.gradleProperty("gpr.user").orNull
+                    password = System.getenv("GITHUB_TOKEN")
+                        ?: providers.gradleProperty("gpr.key").orNull
                 }
             }
         }

@@ -23,7 +23,7 @@ android {
             // consumer gets only the public API in readable form. See proguard-rules.pro.
             isMinifyEnabled = true
             isShrinkResources = false // not supported for libraries; the app shrinks them
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro",)
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 
@@ -55,8 +55,8 @@ afterEvaluate {
                 from(components["release"])
                 groupId = "com.marocsbhai"
                 artifactId = "event-box"
-                // The publish workflow sets VERSION to the git tag (e.g. 1.0.0).
-                version = System.getenv("VERSION") ?: "1.0.0"
+                // The publishing workflow sets VERSION to the git tag (e.g. 1.0.0).
+                version = System.getenv("VERSION") ?: "1.0.1"
 
                 pom {
                     name.set("Event Box")

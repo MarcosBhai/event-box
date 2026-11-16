@@ -323,6 +323,8 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         val text: TextView,
         val warningIcon: ImageView,
         val details: View,
+        val paramsTitle: TextView,
+        val paramsText: TextView,
         val warningTitle: TextView,
         val warningEventName: TextView,
         val warningMessage: TextView,
@@ -340,6 +342,8 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
             text = view.findViewById(R.id.og_event_box_item_text),
             warningIcon = view.findViewById(R.id.og_event_box_item_warning),
             details = view.findViewById(R.id.og_event_box_item_details),
+            paramsTitle = view.findViewById(R.id.og_event_box_item_params_title),
+            paramsText = view.findViewById(R.id.og_event_box_item_params_text),
             warningTitle = view.findViewById(R.id.og_event_box_item_warning_title),
             warningEventName = view.findViewById(R.id.og_event_box_item_warning_event_name),
             warningMessage = view.findViewById(R.id.og_event_box_item_warning_message),
@@ -353,7 +357,8 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
     private fun bindRow(rowView: View, event: OGEventBoxDebugEvent, isLatest: Boolean) {
         val holder = rowView.tag as? RowViewHolder ?: return
         val isExpanded = (expandedEventIndex == event.index)
-        val key = "${event.index}|$isLatest|${event.hasWarning}|$isExpanded"
+        val hasParams = !event.params.isNullOrEmpty()
+        val key = "${event.index}|$isLatest|${event.hasWarning}|$hasParams|$isExpanded"
         holder.eventIndex = event.index
         if (holder.bindKey == key) return
         holder.bindKey = key
@@ -372,22 +377,47 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         }
 
         holder.divider.isVisible = !isLatest
-
         holder.warningIcon.isVisible = event.hasWarning
-        if (event.hasWarning) {
-            holder.warningEventName.text = "Event: ${event.name}"
-            holder.warningMessage.text = event.warnings.joinToString("\n") { "• $it" }
-            holder.details.isVisible = isExpanded
-            holder.warningIcon.setOnClickListener {
-                handleWarningIconClicked(event, holder)
-            }
+
+        // Details bindings
+        holder.warningEventName.text = "Event: ${event.name}"
+
+        // Params display
+        if (hasParams) {
+            holder.paramsTitle.isVisible = true
+            holder.paramsText.isVisible = true
+            holder.paramsText.text = event.params!!.entries.joinToString("\n") { "  ${it.key}: ${it.value}" }
         } else {
-            holder.details.isVisible = false
+            holder.paramsTitle.isVisible = true
+            holder.paramsText.isVisible = true
+            holder.paramsText.text = "  (no parameters)"
+        }
+
+        // Warnings display
+        if (event.hasWarning) {
+            holder.warningTitle.isVisible = true
+            holder.warningMessage.isVisible = true
+            holder.warningMessage.text = event.warnings.joinToString("\n") { "• $it" }
+        } else {
+            holder.warningTitle.isVisible = false
+            holder.warningMessage.isVisible = false
+        }
+
+        holder.details.isVisible = isExpanded
+
+        // Set click listener on the row header (and warning icon if present) so tapping ANY event row toggles expansion
+        val rowClickListener = OnClickListener {
+            handleRowClicked(event, holder)
+        }
+        holder.header.setOnClickListener(rowClickListener)
+        if (event.hasWarning) {
+            holder.warningIcon.setOnClickListener(rowClickListener)
+        } else {
             holder.warningIcon.setOnClickListener(null)
         }
     }
 
-    private fun handleWarningIconClicked(event: OGEventBoxDebugEvent, holder: RowViewHolder) {
+    private fun handleRowClicked(event: OGEventBoxDebugEvent, holder: RowViewHolder) {
         scheduleAutoShrink()
         if (expandedEventIndex == event.index) {
             expandedEventIndex = null

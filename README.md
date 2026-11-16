@@ -101,8 +101,8 @@ The library supports compileSdk 36+ and AGP 9.0+.
 Push a version tag; the `Publish to GitHub Packages` workflow builds, tests and publishes it:
 
 ```bash
-git tag 1.0.1
-git push origin 1.0.1
+git tag 1.0.2
+git push origin 1.0.2
 ```
 
 You can also run the workflow by hand from the **Actions** tab. A version number can only be

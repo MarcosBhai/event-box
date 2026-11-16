@@ -1,7 +1,7 @@
 name: Publish to GitHub Packages
 
 # Runs when you push a version tag, e.g.:
-#   git tag 1.0.1 && git push origin 1.0.1
+#   git tag 1.0.2 && git push origin 1.0.2
 # You can also start it by hand from the Actions tab.
 on:
   push:
@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to publish (e.g. 1.0.1)"
+        description: "Version to publish (e.g. 1.0.2)"
         required: true
 
 permissions:

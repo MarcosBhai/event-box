@@ -34,13 +34,15 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Make gradlew executable
-        run: chmod +x gradlew
+        run: |
+          chmod +x gradlew
+          sed -i 's/\r$//' gradlew
 
       - name: Run unit tests
-        run: ./gradlew :eventBox:testReleaseUnitTest --console=plain
+        run: sh ./gradlew :eventBox:testReleaseUnitTest --console=plain
 
       - name: Publish library
-        run: ./gradlew :eventBox:publishReleasePublicationToGitHubPackagesRepository --console=plain
+        run: sh ./gradlew :eventBox:publishReleasePublicationToGitHubPackagesRepository --console=plain
         env:
           VERSION: ${{ github.event.inputs.version || github.ref_name }}
           GITHUB_ACTOR: ${{ github.actor }}

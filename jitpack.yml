@@ -1,0 +1,7 @@
+# JitPack build: https://jitpack.io/#MarcosBhai/event-box
+# AGP 9 and Gradle 9 need JDK 17+. JitPack sets VERSION to the git tag.
+jdk:
+  - openjdk17
+install:
+  - chmod +x gradlew
+  - ./gradlew :eventBox:publishReleasePublicationToMavenLocal --console=plain

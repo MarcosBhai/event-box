@@ -53,60 +53,73 @@ parameters) are often found only after release.
 
 ## 1. Add the dependency
 
-Event Box is a **private** package hosted on GitHub Packages. To download it you need a GitHub
-account with read access to `MarcosBhai/event-box` and a **Personal Access Token (classic)** with
-the `read:packages` scope (GitHub → Settings → Developer settings → Personal access tokens).
-GitHub account passwords are not accepted.
+Event Box is published on [JitPack](https://jitpack.io/#MarcosBhai/event-box). No account or
+token is needed.
 
-**Step 1. Save your credentials outside the project**, in `~/.gradle/gradle.properties`
-(Windows: `C:\Users\<you>\.gradle\gradle.properties`). Never commit this file or token.
-
-```properties
-gpr.user=YOUR_GITHUB_USERNAME
-gpr.key=ghp_yourPersonalAccessToken
-```
-
-On CI, set the environment variables `GPR_USER` and `GPR_KEY` instead.
-
-**Step 2. Add the repository** in `settings.gradle.kts`:
+**Step 1. Add the JitPack repository** in `settings.gradle.kts`:
 
 ```kotlin
 dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven {
-            url = uri("https://maven.pkg.github.com/MarcosBhai/event-box")
-            credentials {
-                username = providers.gradleProperty("gpr.user").orNull ?: System.getenv("GPR_USER")
-                password = providers.gradleProperty("gpr.key").orNull ?: System.getenv("GPR_KEY")
-            }
-        }
+        maven { url = uri("https://jitpack.io") }
     }
 }
 ```
 
-**Step 3. Add the dependency** in your app's `build.gradle.kts`:
+**Step 2. Add the dependency** in your app's `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.marcosbhai:event-box:1.0.3")
+    implementation("com.github.MarcosBhai:event-box:1.0.4")
 }
 ```
 
-The library supports compileSdk 36+ and AGP 9.0+.
+The library supports compileSdk 36+ and AGP 9.0+. Imports come from `com.marcosbhai.eventbox`.
+
+<details>
+<summary>Alternative: GitHub Packages (needs a token)</summary>
+
+Every version is also published to GitHub Packages as `com.marcosbhai:event-box`. GitHub requires
+a **Personal Access Token (classic)** with the `read:packages` scope to download from it, even for
+a public repo. Put it in `~/.gradle/gradle.properties` (never in the project):
+
+```properties
+gpr.user=YOUR_GITHUB_USERNAME
+gpr.key=ghp_yourPersonalAccessToken
+```
+
+```kotlin
+// settings.gradle.kts
+maven {
+    url = uri("https://maven.pkg.github.com/MarcosBhai/event-box")
+    credentials {
+        username = providers.gradleProperty("gpr.user").orNull ?: System.getenv("GPR_USER")
+        password = providers.gradleProperty("gpr.key").orNull ?: System.getenv("GPR_KEY")
+    }
+}
+
+// app/build.gradle.kts
+implementation("com.marcosbhai:event-box:1.0.4")
+```
+
+</details>
 
 ### Publishing a new version (maintainers)
 
-Push a version tag; the `Publish to GitHub Packages` workflow builds, tests and publishes it:
+Push a version tag:
 
 ```bash
-git tag 1.0.3
-git push origin 1.0.3
+git tag 1.0.4
+git push origin 1.0.4
 ```
 
-You can also run the workflow by hand from the **Actions** tab. A version number can only be
-published once, so always use a new tag.
+- **JitPack** builds the tag the first time someone requests it (or open
+  https://jitpack.io/#MarcosBhai/event-box and click **Get it**). The build is set up in `jitpack.yml`.
+- **GitHub Packages**: the `Publish to GitHub Packages` workflow builds, tests and publishes it.
+
+A version number can only be published once, so always use a new tag.
 
 ## 2. Set it up
 

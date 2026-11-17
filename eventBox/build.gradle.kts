@@ -56,7 +56,7 @@ afterEvaluate {
                 groupId = "com.marcosbhai"
                 artifactId = "event-box"
                 // The publishing workflow sets VERSION to the git tag (e.g. 1.0.0).
-                version = System.getenv("VERSION") ?: "1.0.3"
+                version = System.getenv("VERSION") ?: "1.0.4"
 
                 pom {
                     name.set("Event Box")

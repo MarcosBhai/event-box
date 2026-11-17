@@ -90,7 +90,7 @@ dependencyResolutionManagement {
 
 ```kotlin
 dependencies {
-    implementation("com.marocsbhai:event-box:1.0.0")
+    implementation("com.marocsbhai:event-box:1.0.2")
 }
 ```
 

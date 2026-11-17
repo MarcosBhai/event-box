@@ -41,7 +41,19 @@ parameters) are often found only after release.
   badge, and shrinks back on its own.
 - **Firebase limit warnings**: a ⚠ icon on any event that breaks a Firebase Analytics rule, with
   the exact reason on tap.
+- **Search and filter**: type `login`, `screen:home` or `!user_property`, or tap the All /
+  ⚠ Warnings / Events / User props / source chips. Matches are highlighted.
+- **Copy and share**: long-press a row to copy it as JSON, or share the visible log. Long
+  sessions are shared as a `.json` file.
+- **Fast list**: a RecyclerView that only redraws the rows that changed. The log size can be set
+  from 10 to 1000 (200 by default), with an "N older events dropped" notice.
+- **Spot bugs fast**: back-to-back duplicates are merged into one row shown as `×N`, rows get a
+  colour stripe (amber = warning, blue = user property), `+1.2s` deltas, a key/value table with
+  value types (`S`/`L`/`D`/`B`), and pause/resume.
+- **Expected-event checklist**: `expect("login_start", "purchase")` shows ✓ fired / ○ missing.
+- **Source tags**: tell Firebase, AppsFlyer, Mixpanel and other events apart, and filter by source.
 - **Resizable, pinnable panel**: drag the bottom handle to change the height, pin to keep it open.
+  Adjustable opacity, 48 dp touch targets, and a width cap on tablets.
 - **Background overlay** (optional): keep the box visible when your app is in the background or in
   recents (`OFF`, `AUTO`, `OVERLAY_ONLY`).
 - **Safe by design**: a kill switch, a timed session that ends by itself, and logging that never
@@ -72,7 +84,7 @@ dependencyResolutionManagement {
 
 ```kotlin
 dependencies {
-    implementation("com.github.MarcosBhai:event-box:1.0.4")
+    implementation("com.github.MarcosBhai:event-box:1.0.5")
 }
 ```
 
@@ -101,7 +113,7 @@ maven {
 }
 
 // app/build.gradle.kts
-implementation("com.marcosbhai:event-box:1.0.4")
+implementation("com.marcosbhai:event-box:1.0.5")
 ```
 
 </details>
@@ -111,8 +123,8 @@ implementation("com.marcosbhai:event-box:1.0.4")
 Push a version tag:
 
 ```bash
-git tag 1.0.4
-git push origin 1.0.4
+git tag 1.0.5
+git push origin 1.0.5
 ```
 
 - **JitPack** builds the tag the first time someone requests it (or open
@@ -281,6 +293,14 @@ OGEventBoxLog.setPanelResizingEnabled(false);
     - **Pin**: stops it from auto-shrinking.
     - **Minimize** (or tap the logo): shrinks it now.
     - **CLEAR**: empties the log.
+    - **Search** 🔍: opens the search bar. The filter chips work without the keyboard; tap the
+      field to type. Query syntax is case-insensitive and space means AND: `login` (name, key or
+      value), `screen:home` (that parameter's value), `!term` (exclude).
+    - **Pause / Share** (in the search bar): freeze the list while events keep recording
+      (`▶ Resume (+N)`), or share the visible events as JSON.
+    - **Rows**: tap to see parameters and warnings, long-press to copy the event as JSON.
+      `↓ N new` appears when you have scrolled up and new events arrive.
+    - **Long-press the logo**: cycles the panel opacity (100 → 85 → 70 → 60%).
 - **Close**: drag the box toward the bottom of the screen and drop it on the close target to end
   the session.
 
@@ -346,9 +366,15 @@ Without it, `hasOverlayPermission()` returns `false` and the box behaves as with
 | `OGEventBoxLog.isActive` | Is the box on? (`Boolean`) |
 | `OGEventBoxLog.isActiveFlow` | Same, as a `StateFlow<Boolean>` |
 | `OGEventBoxLog.remainingMinutes(context)` | Minutes left (0 when off) |
-| `OGEventBoxLog.events` | The log as `StateFlow<List<OGEventBoxDebugEvent>>` (max 200) |
+| `OGEventBoxLog.events` | The log as `StateFlow<List<OGEventBoxDebugEvent>>` (200 by default) |
 | `OGEventBoxLog.clear()` | Empties the log |
 | `OGEventBoxLog.setUserProperty(name, value)` | Records a user property (checked against Firebase limits) |
+| `OGEventBoxLog.log(name, params, source)` | Logs with a source tag, e.g. `"firebase"` (also `OGEventBoxAnalytics.wrap(sink, source = ...)`) |
+| `OGEventBoxLog.setMaxEvents(n)` | Log size, 10..1000 (default 200); `droppedEventCount` tells how many were dropped |
+| `OGEventBoxLog.setDetectDuplicates(enabled)` | Merges identical back-to-back events into one `×N` row (default on) |
+| `OGEventBoxLog.setDuplicateWindowMs(ms)` | How close together duplicates must be (default 500) |
+| `OGEventBoxLog.expect(vararg names)` | Shows a checklist of expected events; `missingExpectedEvents()`, `clearExpectations()` |
+| `OGEventBoxLog.setPanelAlpha(0.6f..1f)` | Panel background opacity (text stays opaque) |
 
 ## Release builds
 

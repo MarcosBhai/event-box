@@ -255,6 +255,21 @@ object OGEventBoxLog {
     }
 
     /**
+     * Logs an event with parameters and a [source] tag (e.g. "firebase", "appsflyer"), so events
+     * from different SDKs can be told apart and filtered in the box.
+     */
+    @JvmStatic
+    fun log(name: String, params: Map<String, Any?>?, source: String?) {
+        OGEventBoxRepository.log(name, params, source)
+    }
+
+    /** Logs an event with a bundle of parameters and a [source] tag. */
+    @JvmStatic
+    fun log(name: String, bundle: android.os.Bundle?, source: String?) {
+        OGEventBoxRepository.log(name, bundle, source)
+    }
+
+    /**
      * Records a user property into the OGEventBox log and validates against Firebase limits.
      */
     @JvmStatic
@@ -269,6 +284,85 @@ object OGEventBoxLog {
     fun clear() {
         OGEventBoxRepository.clear()
         OGEventBoxOverlay.viewModel.lastSeenIndex = 0
+    }
+
+    // =========================================================================
+    // 5b. Log size & duplicate detection
+    // =========================================================================
+
+    /**
+     * How many entries the log keeps before dropping the oldest. Defaults to [MAX_EVENTS];
+     * values are kept within 10..1000.
+     */
+    @get:JvmStatic
+    @set:JvmSynthetic
+    var maxEvents: Int
+        get() = OGEventBoxRepository.maxEvents
+        set(value) { OGEventBoxRepository.maxEvents = value }
+
+    /** Fluent setter for [maxEvents]. */
+    @JvmStatic
+    fun setMaxEvents(count: Int): OGEventBoxLog = apply { this.maxEvents = count }
+
+    /** Entries dropped from the top of the log since the last clear because it was full. */
+    @get:JvmStatic
+    val droppedEventCount: Int get() = OGEventBoxRepository.droppedCount
+
+    /**
+     * When true (the default), an event that fires again with the same name, source and
+     * parameters within [duplicateWindowMs] of the previous one is counted on that row (shown as
+     * ×N) instead of adding a new row. Double-firing is a common analytics bug.
+     */
+    @get:JvmStatic
+    @set:JvmSynthetic
+    var detectDuplicates: Boolean
+        get() = OGEventBoxRepository.detectDuplicates
+        set(value) { OGEventBoxRepository.detectDuplicates = value }
+
+    /** Fluent setter for [detectDuplicates]. */
+    @JvmStatic
+    fun setDetectDuplicates(enabled: Boolean): OGEventBoxLog = apply { this.detectDuplicates = enabled }
+
+    /** How close together (in ms) two identical events must be to count as a duplicate. Default 500. */
+    @get:JvmStatic
+    @set:JvmSynthetic
+    var duplicateWindowMs: Long
+        get() = OGEventBoxRepository.duplicateWindowMs
+        set(value) { OGEventBoxRepository.duplicateWindowMs = value }
+
+    /** Fluent setter for [duplicateWindowMs]. */
+    @JvmStatic
+    fun setDuplicateWindowMs(windowMs: Long): OGEventBoxLog = apply { this.duplicateWindowMs = windowMs }
+
+    // =========================================================================
+    // 5c. Expected events checklist
+    // =========================================================================
+
+    /**
+     * Sets the events a test flow should fire. The panel then shows a checklist of which have
+     * fired (✓) and which are still missing (○). Replaces any earlier list; call with no names
+     * (or [clearExpectations]) to hide the checklist.
+     */
+    @JvmStatic
+    fun expect(vararg eventNames: String): OGEventBoxLog = apply {
+        OGEventBoxRepository.setExpectedEvents(eventNames.toList())
+    }
+
+    /** Removes the expected-events checklist. */
+    @JvmStatic
+    fun clearExpectations(): OGEventBoxLog = apply {
+        OGEventBoxRepository.setExpectedEvents(emptyList())
+    }
+
+    /** The names passed to [expect], in order. */
+    @get:JvmStatic
+    val expectedEvents: List<String> get() = OGEventBoxRepository.expectedEvents.value
+
+    /** Expected events that are not in the current log yet. Empty when all have fired. */
+    @JvmStatic
+    fun missingExpectedEvents(): List<String> {
+        val fired = OGEventBoxRepository.events.value.mapTo(HashSet()) { it.name }
+        return OGEventBoxRepository.expectedEvents.value.filter { it !in fired }
     }
 
     // =========================================================================
@@ -331,4 +425,21 @@ object OGEventBoxLog {
     fun setBubbleCornerRadiusDp(radiusDp: Float): OGEventBoxLog = apply {
         this.bubbleCornerRadiusDp = radiusDp
     }
+
+    /**
+     * Opacity of the open panel's background, from 0.6 (see the app through it) to 1 (solid, the
+     * default). Text stays fully opaque. Testers can also cycle it by long-pressing the panel logo.
+     */
+    @get:JvmStatic
+    @set:JvmSynthetic
+    var panelAlpha: Float
+        get() = OGEventBoxRepository.panelAlpha
+        set(value) {
+            OGEventBoxRepository.panelAlpha = value
+            OGEventBoxOverlay.updatePanelAlpha()
+        }
+
+    /** Fluent setter for [panelAlpha]. */
+    @JvmStatic
+    fun setPanelAlpha(alpha: Float): OGEventBoxLog = apply { this.panelAlpha = alpha }
 }

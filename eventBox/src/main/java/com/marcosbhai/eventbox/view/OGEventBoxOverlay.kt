@@ -43,7 +43,9 @@ internal object OGEventBoxOverlay : Application.ActivityLifecycleCallbacks {
     private var appContext: Context? = null
 
     private val focusListener = ViewTreeObserver.OnWindowFocusChangeListener { hasFocus ->
-        if (!hasFocus) view?.postDelayed(raiseRunnable, RAISE_DELAY_MS)
+        // The Activity also loses focus when the box's own search field takes it; re-adding the
+        // window then would throw the keyboard away, so only raise for other windows.
+        if (!hasFocus && view?.isSearchInputFocused != true) view?.postDelayed(raiseRunnable, RAISE_DELAY_MS)
     }
     private val raiseRunnable = Runnable { raiseAboveNewWindows() }
 
@@ -82,6 +84,17 @@ internal object OGEventBoxOverlay : Application.ActivityLifecycleCallbacks {
                 view?.updateResizingState()
             } else {
                 mainHandler.post { view?.updateResizingState() }
+            }
+        }
+    }
+
+    /** Re-applies the panel opacity in the active view, if attached. Safe from any thread. */
+    fun updatePanelAlpha() {
+        runCatching {
+            if (Looper.myLooper() == Looper.getMainLooper()) {
+                view?.applyPanelAlpha()
+            } else {
+                mainHandler.post { view?.applyPanelAlpha() }
             }
         }
     }
@@ -188,6 +201,7 @@ internal object OGEventBoxOverlay : Application.ActivityLifecycleCallbacks {
         val box = view ?: return
         val params = windowParams ?: return
         if (activity.isFinishing || activity.isDestroyed) return
+        if (box.isSearchInputFocused) return
         runCatching {
             activity.windowManager.removeViewImmediate(box)
             activity.windowManager.addView(box, params)

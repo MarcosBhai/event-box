@@ -41,6 +41,8 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+    // Event list in the panel (diffed updates instead of re-binding every row).
+    implementation(libs.androidx.recyclerview)
     // StateFlow is part of the public API (NextGenEventLog.events / isActiveFlow).
     api(libs.kotlinx.coroutines.android)
     testImplementation(libs.junit)
@@ -56,7 +58,7 @@ afterEvaluate {
                 groupId = "com.marcosbhai"
                 artifactId = "event-box"
                 // The publishing workflow sets VERSION to the git tag (e.g. 1.0.0).
-                version = System.getenv("VERSION") ?: "1.0.4"
+                version = System.getenv("VERSION") ?: "1.0.5"
 
                 pom {
                     name.set("Event Box")

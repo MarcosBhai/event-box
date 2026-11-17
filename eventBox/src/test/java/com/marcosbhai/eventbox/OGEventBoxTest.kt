@@ -1,9 +1,9 @@
-package com.marocsbhai.eventbox
+package com.marcosbhai.eventbox
 
-import com.marocsbhai.eventbox.model.OGEventBoxDebugEvent
-import com.marocsbhai.eventbox.model.OGEventBoxPosition
-import com.marocsbhai.eventbox.model.OGEventBoxUiState
-import com.marocsbhai.eventbox.viewmodel.OGEventBoxViewModel
+import com.marcosbhai.eventbox.model.OGEventBoxDebugEvent
+import com.marcosbhai.eventbox.model.OGEventBoxPosition
+import com.marcosbhai.eventbox.model.OGEventBoxUiState
+import com.marcosbhai.eventbox.viewmodel.OGEventBoxViewModel
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -84,7 +84,7 @@ class OGEventBoxTest {
 
     @Test
     fun testValidEventValidation() {
-        val warnings = com.marocsbhai.eventbox.validator.OGEventBoxValidator.validateEvent(
+        val warnings = com.marcosbhai.eventbox.validator.OGEventBoxValidator.validateEvent(
             "valid_purchase_event",
             mapOf("item_id" to "sku_123", "price" to 19.99)
         )
@@ -94,14 +94,14 @@ class OGEventBoxTest {
     @Test
     fun testEventNameLengthLimit() {
         val longName = "this_is_an_extremely_long_event_name_that_exceeds_forty_characters"
-        val warnings = com.marocsbhai.eventbox.validator.OGEventBoxValidator.validateEvent(longName)
+        val warnings = com.marcosbhai.eventbox.validator.OGEventBoxValidator.validateEvent(longName)
         assertTrue(warnings.any { it.contains("exceeds max limit of 40") })
     }
 
     @Test
     fun testEventNameCharactersLimit() {
         val invalidName = "invalid-name with spaces!"
-        val warnings = com.marocsbhai.eventbox.validator.OGEventBoxValidator.validateEvent(invalidName)
+        val warnings = com.marcosbhai.eventbox.validator.OGEventBoxValidator.validateEvent(invalidName)
         assertTrue(warnings.any { it.contains("invalid characters") })
     }
 
@@ -111,7 +111,7 @@ class OGEventBoxTest {
         for (i in 1..28) {
             heavyParams["param_$i"] = "val_$i"
         }
-        val warnings = com.marocsbhai.eventbox.validator.OGEventBoxValidator.validateEvent("heavy_event", heavyParams)
+        val warnings = com.marcosbhai.eventbox.validator.OGEventBoxValidator.validateEvent("heavy_event", heavyParams)
         assertTrue(warnings.any { it.contains("max 25 unique parameters") })
     }
 
@@ -119,7 +119,7 @@ class OGEventBoxTest {
     fun testParameterNameAndValueLengthLimit() {
         val longParamName = "parameter_name_that_is_so_long_that_it_exceeds_forty_characters_limit"
         val longParamValue = "V".repeat(120)
-        val warnings = com.marocsbhai.eventbox.validator.OGEventBoxValidator.validateEvent(
+        val warnings = com.marcosbhai.eventbox.validator.OGEventBoxValidator.validateEvent(
             "param_test_event",
             mapOf(longParamName to longParamValue)
         )
@@ -131,7 +131,7 @@ class OGEventBoxTest {
     fun testUserPropertyLimits() {
         val longPropName = "user_property_name_too_long" // 27 chars > 24
         val longPropValue = "V".repeat(40) // 40 chars > 36
-        val warnings = com.marocsbhai.eventbox.validator.OGEventBoxValidator.validateUserProperty(
+        val warnings = com.marcosbhai.eventbox.validator.OGEventBoxValidator.validateUserProperty(
             longPropName,
             longPropValue
         )
@@ -141,16 +141,16 @@ class OGEventBoxTest {
 
     @Test
     fun testDistinctCustomEventsLimit() {
-        com.marocsbhai.eventbox.validator.OGEventBoxValidator.reset()
+        com.marcosbhai.eventbox.validator.OGEventBoxValidator.reset()
         for (i in 1..500) {
-            com.marocsbhai.eventbox.validator.OGEventBoxValidator.validateEvent("custom_event_$i")
+            com.marcosbhai.eventbox.validator.OGEventBoxValidator.validateEvent("custom_event_$i")
         }
         // 501st event should trigger warning
-        val warnings = com.marocsbhai.eventbox.validator.OGEventBoxValidator.validateEvent("custom_event_501")
+        val warnings = com.marcosbhai.eventbox.validator.OGEventBoxValidator.validateEvent("custom_event_501")
         assertTrue(warnings.any { it.contains("max 500 custom event types") })
 
-        com.marocsbhai.eventbox.validator.OGEventBoxValidator.reset()
-        assertEquals(0, com.marocsbhai.eventbox.validator.OGEventBoxValidator.getDistinctCustomEventsCount())
+        com.marcosbhai.eventbox.validator.OGEventBoxValidator.reset()
+        assertEquals(0, com.marcosbhai.eventbox.validator.OGEventBoxValidator.getDistinctCustomEventsCount())
     }
 
     @Test

@@ -1,4 +1,4 @@
-package com.marocsbhai.eventbox.model
+package com.marcosbhai.eventbox.model
 
 /**
  * Controls whether the box may stay visible while the app is in the background or in recents.

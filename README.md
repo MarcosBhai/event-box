@@ -1,6 +1,6 @@
 # Event Box
 
-[![Publish](https://github.com/MarocsBhai/event-box/actions/workflows/publish.yml/badge.svg)](https://github.com/MarocsBhai/event-box/actions/workflows/publish.yml)
+[![Publish](https://github.com/MarcosBhai/event-box/actions/workflows/publish.yml/badge.svg)](https://github.com/MarcosBhai/event-box/actions/workflows/publish.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![minSdk](https://img.shields.io/badge/minSdk-21-brightgreen.svg)](#1-add-the-dependency)
 [![Kotlin](https://img.shields.io/badge/Kotlin-%20%7C%20Java-7F52FF.svg?logo=kotlin&logoColor=white)](#4-log-your-events)
@@ -54,7 +54,7 @@ parameters) are often found only after release.
 ## 1. Add the dependency
 
 Event Box is a **private** package hosted on GitHub Packages. To download it you need a GitHub
-account with read access to `MarocsBhai/event-box` and a **Personal Access Token (classic)** with
+account with read access to `MarcosBhai/event-box` and a **Personal Access Token (classic)** with
 the `read:packages` scope (GitHub → Settings → Developer settings → Personal access tokens).
 GitHub account passwords are not accepted.
 
@@ -76,7 +76,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven {
-            url = uri("https://maven.pkg.github.com/MarocsBhai/event-box")
+            url = uri("https://maven.pkg.github.com/MarcosBhai/event-box")
             credentials {
                 username = providers.gradleProperty("gpr.user").orNull ?: System.getenv("GPR_USER")
                 password = providers.gradleProperty("gpr.key").orNull ?: System.getenv("GPR_KEY")
@@ -90,7 +90,7 @@ dependencyResolutionManagement {
 
 ```kotlin
 dependencies {
-    implementation("com.marocsbhai:event-box:1.0.2")
+    implementation("com.marcosbhai:event-box:1.0.3")
 }
 ```
 
@@ -101,8 +101,8 @@ The library supports compileSdk 36+ and AGP 9.0+.
 Push a version tag; the `Publish to GitHub Packages` workflow builds, tests and publishes it:
 
 ```bash
-git tag 1.0.2
-git push origin 1.0.2
+git tag 1.0.3
+git push origin 1.0.3
 ```
 
 You can also run the workflow by hand from the **Actions** tab. A version number can only be

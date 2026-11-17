@@ -1,12 +1,12 @@
-package com.marocsbhai.eventbox.data
+package com.marcosbhai.eventbox.data
 
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import com.marocsbhai.eventbox.model.OGEventBoxBackgroundMode
-import com.marocsbhai.eventbox.model.OGEventBoxDebugEvent
-import com.marocsbhai.eventbox.model.OGEventBoxPosition
+import com.marcosbhai.eventbox.model.OGEventBoxBackgroundMode
+import com.marcosbhai.eventbox.model.OGEventBoxDebugEvent
+import com.marcosbhai.eventbox.model.OGEventBoxPosition
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -112,7 +112,7 @@ internal object OGEventBoxRepository {
         runCatching {
             val snapshot = params?.let { LinkedHashMap(it) }
             val warnings = if (firebaseChecksEnabled) {
-                com.marocsbhai.eventbox.validator.OGEventBoxValidator.validateEvent(name, snapshot)
+                com.marcosbhai.eventbox.validator.OGEventBoxValidator.validateEvent(name, snapshot)
             } else {
                 emptyList()
             }
@@ -140,7 +140,7 @@ internal object OGEventBoxRepository {
         if (!isActive || name.isBlank()) return
         runCatching {
             val warnings = if (firebaseChecksEnabled) {
-                com.marocsbhai.eventbox.validator.OGEventBoxValidator.validateUserProperty(name, value)
+                com.marcosbhai.eventbox.validator.OGEventBoxValidator.validateUserProperty(name, value)
             } else {
                 emptyList()
             }
@@ -166,7 +166,7 @@ internal object OGEventBoxRepository {
         synchronized(lock) {
             nextIndex = 1
             _events.value = emptyList()
-            com.marocsbhai.eventbox.validator.OGEventBoxValidator.reset()
+            com.marcosbhai.eventbox.validator.OGEventBoxValidator.reset()
         }
     }
 

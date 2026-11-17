@@ -1,4 +1,4 @@
-package com.marocsbhai.eventbox.model
+package com.marcosbhai.eventbox.model
 
 /**
  * Where the bubble was left: which side rail, and how far down the screen as a fraction of its

@@ -1,4 +1,4 @@
-package com.marocsbhai.eventbox.view
+package com.marcosbhai.eventbox.view
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -14,9 +14,9 @@ import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.view.WindowManager
 import android.widget.FrameLayout
-import com.marocsbhai.eventbox.data.OGEventBoxRepository
-import com.marocsbhai.eventbox.model.OGEventBoxBackgroundMode
-import com.marocsbhai.eventbox.viewmodel.OGEventBoxViewModel
+import com.marcosbhai.eventbox.data.OGEventBoxRepository
+import com.marcosbhai.eventbox.model.OGEventBoxBackgroundMode
+import com.marcosbhai.eventbox.viewmodel.OGEventBoxViewModel
 
 /**
  * Keeps exactly one [OGEventBoxView] over whichever Activity is in front, for as long as debug mode

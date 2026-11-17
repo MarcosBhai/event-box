@@ -1,4 +1,4 @@
-package com.marocsbhai.eventbox.view
+package com.marcosbhai.eventbox.view
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
@@ -47,10 +47,10 @@ import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
-import com.marocsbhai.eventbox.OGEventBoxLog
-import com.marocsbhai.eventbox.R
-import com.marocsbhai.eventbox.model.OGEventBoxDebugEvent
-import com.marocsbhai.eventbox.viewmodel.OGEventBoxViewModel
+import com.marcosbhai.eventbox.OGEventBoxLog
+import com.marcosbhai.eventbox.R
+import com.marcosbhai.eventbox.model.OGEventBoxDebugEvent
+import com.marcosbhai.eventbox.viewmodel.OGEventBoxViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

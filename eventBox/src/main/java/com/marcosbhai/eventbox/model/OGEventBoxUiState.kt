@@ -1,4 +1,4 @@
-package com.marocsbhai.eventbox.model
+package com.marcosbhai.eventbox.model
 
 /**
  * Encapsulates the UI state of the OGEventBox overlay for MVVM pattern.

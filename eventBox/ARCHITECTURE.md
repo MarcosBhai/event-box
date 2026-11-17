@@ -25,9 +25,9 @@ Design constraints that drive most decisions:
 | Reusable by anyone | Pure Kotlin, `minSdk 21`, only `core-ktx` + coroutines, own resources, fixed colours |
 | Hard to lift the source | Not guaranteed: AGP ignores `isMinifyEnabled` for the published AAR, so obfuscation comes from the consuming app's R8, which honours the keep rules |
 
-Module facts: library `com.marocsbhai.eventbox`, `minSdk 21`, `compileSdk 37`, Java 11,
+Module facts: library `com.marcosbhai.eventbox`, `minSdk 21`, `compileSdk 37`, Java 11,
 `kotlinx-coroutines-android` exposed as `api` (StateFlow in the public API). Published privately to GitHub Packages as
-`com.marocsbhai:event-box` (version comes from the git tag via `VERSION`).
+`com.marcosbhai:event-box` (version comes from the git tag via `VERSION`).
 
 ---
 
@@ -40,7 +40,7 @@ eventBox/
   consumer-rules.pro      packaged into the AAR as proguard.txt (keeps public API only)
   src/main/
     AndroidManifest.xml   empty (no components, no permissions)
-    java/com/marocsbhai/eventbox/
+    java/com/marcosbhai/eventbox/
       OGEventBoxLog.kt          PUBLIC facade: fluent config, session control, logging API
       OGEventBoxAnalytics.kt    PUBLIC: wrapper that logs to your SDK and Event Box in one call
       model/
@@ -197,11 +197,11 @@ End of session (any of)
   proguard-rules.pro) }`, `consumerProguardFiles("consumer-rules.pro")`.
   `isShrinkResources` is not available for libraries -- the host app does it.
 - `proguard-rules.pro`: keeps public members of `OGEventBoxLog`, `OGEventBoxDebugEvent` and
-  `OGEventBoxValidator`; everything else is repackaged into `com.marocsbhai.eventbox.a`,
+  `OGEventBoxValidator`; everything else is repackaged into `com.marcosbhai.eventbox.a`,
   renamed, and stripped of Kotlin intrinsic null checks and `Log.d/v`.
 - `consumer-rules.pro`: the same three keep rules only, shipped as `proguard.txt` in the AAR.
 - Publishing: `.github/workflows/publish.yml` runs on a pushed tag and calls
-  `publishReleasePublicationToGitHubPackagesRepository`; coordinates `com.marocsbhai:event-box`,
+  `publishReleasePublicationToGitHubPackagesRepository`; coordinates `com.marcosbhai:event-box`,
   version from the `VERSION` env var (the git tag).
 - If you add a **public** class, add it to *both* rules files.
 

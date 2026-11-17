@@ -1,8 +1,8 @@
-package com.marocsbhai.eventbox.data
+package com.marcosbhai.eventbox.data
 
 import android.content.Context
 import androidx.core.content.edit
-import com.marocsbhai.eventbox.model.OGEventBoxPosition
+import com.marcosbhai.eventbox.model.OGEventBoxPosition
 
 /**
  * Persists session expiry and resting position in SharedPreferences.

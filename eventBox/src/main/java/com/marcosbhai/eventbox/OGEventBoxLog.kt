@@ -1,14 +1,14 @@
-package com.marocsbhai.eventbox
+package com.marcosbhai.eventbox
 
 import android.app.Application
 import android.content.Context
 import android.widget.ImageView
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
-import com.marocsbhai.eventbox.data.OGEventBoxRepository
-import com.marocsbhai.eventbox.model.OGEventBoxBackgroundMode
-import com.marocsbhai.eventbox.model.OGEventBoxDebugEvent
-import com.marocsbhai.eventbox.view.OGEventBoxOverlay
+import com.marcosbhai.eventbox.data.OGEventBoxRepository
+import com.marcosbhai.eventbox.model.OGEventBoxBackgroundMode
+import com.marcosbhai.eventbox.model.OGEventBoxDebugEvent
+import com.marcosbhai.eventbox.view.OGEventBoxOverlay
 import kotlinx.coroutines.flow.StateFlow
 
 /**

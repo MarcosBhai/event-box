@@ -1,4 +1,4 @@
-package com.marocsbhai.eventbox.validator
+package com.marcosbhai.eventbox.validator
 
 import java.util.Calendar
 import java.util.Locale

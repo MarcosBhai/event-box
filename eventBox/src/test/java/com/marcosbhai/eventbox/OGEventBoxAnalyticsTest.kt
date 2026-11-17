@@ -1,4 +1,4 @@
-package com.marocsbhai.eventbox
+package com.marcosbhai.eventbox
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

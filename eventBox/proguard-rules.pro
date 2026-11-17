@@ -2,19 +2,19 @@
 # Goal: only the public API survives by name; internals are renamed, merged and stripped.
 
 # ---- Public API (must match consumer-rules.pro) ----
--keep public class com.marocsbhai.eventbox.OGEventBoxLog {
+-keep public class com.marcosbhai.eventbox.OGEventBoxLog {
     public *;
 }
--keep public class com.marocsbhai.eventbox.model.OGEventBoxDebugEvent {
+-keep public class com.marcosbhai.eventbox.model.OGEventBoxDebugEvent {
     public *;
 }
--keep public class com.marocsbhai.eventbox.validator.OGEventBoxValidator {
+-keep public class com.marcosbhai.eventbox.validator.OGEventBoxValidator {
     public *;
 }
 
 # ---- Hide the rest ----
 # Move every remaining class into one package and let R8 rename members aggressively.
--repackageclasses 'com.marocsbhai.eventbox.a'
+-repackageclasses 'com.marcosbhai.eventbox.a'
 -allowaccessmodification
 -overloadaggressively
 
@@ -37,16 +37,16 @@
     public static int v(...);
 }
 
--keep public enum com.marocsbhai.eventbox.model.OGEventBoxBackgroundMode {
+-keep public enum com.marcosbhai.eventbox.model.OGEventBoxBackgroundMode {
     *;
 }
 
--keep public class com.marocsbhai.eventbox.OGEventBoxAnalytics {
+-keep public class com.marcosbhai.eventbox.OGEventBoxAnalytics {
     public *;
 }
--keep public interface com.marocsbhai.eventbox.OGEventBoxAnalytics$EventSink {
+-keep public interface com.marcosbhai.eventbox.OGEventBoxAnalytics$EventSink {
     *;
 }
--keep public interface com.marocsbhai.eventbox.OGEventBoxAnalytics$UserPropertySink {
+-keep public interface com.marcosbhai.eventbox.OGEventBoxAnalytics$UserPropertySink {
     *;
 }

@@ -1,8 +1,8 @@
-package com.marocsbhai.eventbox.model
+package com.marcosbhai.eventbox.model
 
 /**
  * One line in the on-screen OGEventBox log: a single event that was fired while debug mode was
- * active. Exposed through [com.marocsbhai.eventbox.OGEventBoxLog.events] so a host app can
+ * active. Exposed through [com.marcosbhai.eventbox.OGEventBoxLog.events] so a host app can
  * render its own view of the log if desired.
  */
 data class OGEventBoxDebugEvent @JvmOverloads constructor(

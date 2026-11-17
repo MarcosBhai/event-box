@@ -1,10 +1,10 @@
-package com.marocsbhai.eventbox.viewmodel
+package com.marcosbhai.eventbox.viewmodel
 
 import android.content.Context
-import com.marocsbhai.eventbox.data.OGEventBoxRepository
-import com.marocsbhai.eventbox.model.OGEventBoxDebugEvent
-import com.marocsbhai.eventbox.model.OGEventBoxPosition
-import com.marocsbhai.eventbox.model.OGEventBoxUiState
+import com.marcosbhai.eventbox.data.OGEventBoxRepository
+import com.marcosbhai.eventbox.model.OGEventBoxDebugEvent
+import com.marcosbhai.eventbox.model.OGEventBoxPosition
+import com.marcosbhai.eventbox.model.OGEventBoxUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

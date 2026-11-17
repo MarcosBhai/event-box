@@ -39,7 +39,7 @@ jobs:
           sed -i 's/\r$//' gradlew
 
       - name: Run unit tests
-        run: sh ./gradlew :eventBox:testReleaseUnitTest --console=plain
+        run: sh ./gradlew :eventBox:testDebugUnitTest --console=plain
 
       - name: Publish library
         run: sh ./gradlew :eventBox:publishReleasePublicationToGitHubPackagesRepository --console=plain

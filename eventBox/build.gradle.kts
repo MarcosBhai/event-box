@@ -76,7 +76,7 @@ afterEvaluate {
             // Locally: put gpr.user / gpr.key in ~/.gradle/gradle.properties (never in the project).
             maven {
                 name = "GitHubPackages"
-                url = uri("https://maven.pkg.github.com/MarocsBhai/event-box")
+                url = uri("https://maven.pkg.github.com/MarcosBhai/event-box")
                 credentials {
                     username = System.getenv("GITHUB_ACTOR")
                         ?: providers.gradleProperty("gpr.user").orNull

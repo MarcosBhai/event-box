@@ -1,17 +1,37 @@
 # Event Box: Improvement Plan
 
-> Current release: **1.0.5**. Status: 1.1.0 to 1.4.0 are implemented and released in 1.0.5 (not
+> Current release: **1.0.6** (see [`CHANGELOG.md`](../CHANGELOG.md)). Status: 1.1.0 to 1.4.0 are implemented and released in 1.0.5 (not
 > as separate versions). Every item is marked **✅ DONE**, except the few marked **⬜ NOT DONE** or
 > **⏳ PENDING** with the reason. Line references point at the code as of 1.0.4 and may move.
+> Items taken out again after 1.0.5 are marked **🗑 REMOVED**; see the next section.
+
+## Changes after 1.0.5 (released in 1.0.6)
+
+The panel was simplified. Each change is also noted where its plan item appears below.
+
+| Change | Replaces |
+|---|---|
+| 🗑 Filter chips removed (All / ⚠ Warnings / Events / User props / source chips). The search bar is a text field only, and opens with the keyboard ready. | v1.1.0 §3, §5, §6; v1.4.0 item 2 |
+| `is:` search keywords: `is:warning`, `is:user_property`, `is:event`, `is:repeated` (negate with `!`). | The chips' filters |
+| 🗑 `OGEventBoxFilter` enum and `OGEventBoxUiState.filter` / `sourceFilter` removed (**breaking**). | v1.1.0 §3 |
+| 🗑 Expected-event checklist removed, with `expect()`, `clearExpectations()`, `expectedEvents` and `missingExpectedEvents()` (**breaking**). | v1.4.0 item 1 |
+| 🗑 Header Resize and Minimize buttons removed: tap the logo to shrink, drag the bottom handle to resize. | n/a |
+| Pause and Share moved from the search bar to the header. Closing search no longer resumes; Clear does. | v1.3.0 item 2 |
+| Header buttons are 40×48 dp touch targets (visible 32×32), sized from `og_event_box_header_*` dimens shared by the layout and `applyHeaderOrientation()`. | v1.2.0 item 7 |
+| Clear uses a trash icon and offers a 4-second **Undo**. | n/a |
+| Bottom handle: double-tap resets the height; it pulses on open until first used. Height and opacity are remembered across sessions. | n/a |
+| One-time gesture tip; TalkBack labels for the logo, handle and undo; haptics on Clear, Undo and resize. | n/a |
+
+These removals are breaking; 1.0.6 ships them with an upgrade table in the changelog.
 
 ## Roadmap at a glance
 
 | Version | Theme | Items | Status |
 |---|---|---|---|
-| **1.1.0** | Find events fast | Filter chips, copy/share, text search | ✅ DONE (manual device tests ⏳ PENDING) |
+| **1.1.0** | Find events fast | Filter chips (🗑 REMOVED), copy/share, text search | ✅ DONE (manual device tests ⏳ PENDING) |
 | **1.2.0** | Performance + view | RecyclerView migration, params table, colour-coding, jump-to-latest | ✅ DONE |
 | **1.3.0** | Smarter results | Duplicate detection, pause/freeze, configurable max events, relative time, value types | ✅ DONE |
-| **1.4.0** | Verification + polish | Expected-event checklist, source tags, opacity, accessibility, tablet width | ✅ DONE |
+| **1.4.0** | Verification + polish | Expected-event checklist (🗑 REMOVED), source tags, opacity, accessibility, tablet width | ✅ DONE |
 
 Why this order:
 1. **Filter chips** are the quickest win and need no keyboard, so there are no window-focus problems.
@@ -53,6 +73,8 @@ Where the box is added as a child of the Activity content view (fallback path in
 `OGEventBoxOverlay.kt` ~128), no flag change is needed, but the IME handling still applies.
 
 ### 3. Data layer ✅ DONE
+> 🗑 REMOVED after 1.0.5: `OGEventBoxFilter` and the `filter` field. The query alone does this now, with
+> `is:` keywords (`is:warning`, `is:user_property`, `is:event`, `is:repeated`).
 > `totalCount` was not added as a field; the view uses `events.size`. A `type` field was not
 > added either; user properties are still detected by the name prefix.
 
@@ -110,9 +132,10 @@ Parameter values are compared with `toString()` inside `runCatching`, because th
   - `EditText og_event_box_search_input` (single line, `imeOptions="actionSearch"`, hint
     "Search name, key:value…")
   - ✕ clear button
-  - `HorizontalScrollView` with chips: All · ⚠ Warnings · Events · User props
-- **Chips are visible without opening the keyboard.** Tapping 🔍 shows the bar, and only tapping
-  the EditText switches focus as described in §2.
+  - ~~`HorizontalScrollView` with chips: All · ⚠ Warnings · Events · User props~~ 🗑 REMOVED after 1.0.5
+- ~~**Chips are visible without opening the keyboard.** Tapping 🔍 shows the bar, and only tapping
+  the EditText switches focus as described in §2.~~ 🗑 With the chips gone, 🔍 opens the bar and
+  focuses the field straight away (same focus handling as §2).
 
 **Rendering**
 - `renderEvents()` renders `visibleEvents` instead of `events`.
@@ -127,6 +150,7 @@ Parameter values are compared with `toString()` inside `runCatching`, because th
   (this logic already exists at ~298).
 
 ### 6. Strings, colours and dimens ✅ DONE
+> 🗑 REMOVED after 1.0.5: the four `og_event_box_filter_*` strings and `og_event_box_chip_selected`.
 - `strings.xml`: `og_event_box_search`, `og_event_box_search_hint`,
   `og_event_box_search_clear`, `og_event_box_no_match`, `og_event_box_filter_all`,
   `og_event_box_filter_warnings`, `og_event_box_filter_events`, `og_event_box_filter_user_props`,
@@ -175,7 +199,7 @@ Keep it out of 1.1.0 unless it's needed, because adding it later is non-breaking
    `"Event: ${name}"` and `"  (no parameters)"` (`OGEventBoxView.bindRow`).
 6. ✅ DONE (`setPanelAlpha`, long-press the logo to cycle) **Panel opacity:** a builder option `panelAlpha(0.6f..1f)`, with an optional long-press on
    the title to cycle through values.
-7. ✅ DONE **Accessibility:** header buttons are 32–34 dp. Bring them to a 48 dp touch target (padding or
+7. ✅ DONE (40×48 dp after 1.0.5) **Accessibility:** header buttons are 32–34 dp. Bring them to a 48 dp touch target (padding or
    `TouchDelegate`). Add row `contentDescription` (`"Event 12, login_success, 3 parameters, has warning"`).
 8. ✅ DONE **Tablet and landscape:** cap the panel width at about 480 dp instead of `match_parent`.
 
@@ -187,7 +211,7 @@ Keep it out of 1.1.0 unless it's needed, because adding it later is non-breaking
    same name and equal params within 500 ms, increment a `repeatCount` on it instead of (or as
    well as) adding a row. Show `×3`. Add `repeatCount: Int = 1` to `OGEventBoxDebugEvent` with a
    default value for binary compatibility. Make it configurable: `detectDuplicates(true)` and `duplicateWindowMs(500)`.
-2. ✅ DONE (toggle is in the search bar, the header is full) **Pause / freeze:** a header toggle. While paused, the view keeps rendering a snapshot, the
+2. ✅ DONE (moved to the header after 1.0.5, next to Share) **Pause / freeze:** a header toggle. While paused, the view keeps rendering a snapshot, the
    repository keeps recording, and a "Resume (+N)" banner appears. This is view-model state only.
 3. ✅ DONE **Configurable `MAX_EVENTS`:** `OGEventBoxRepository.MAX_EVENTS = 200` (~line 19) becomes a
    builder option `maxEvents(n)` (with a sensible cap, e.g. 1000). Track a `droppedCount` and show
@@ -202,14 +226,14 @@ Keep it out of 1.1.0 unless it's needed, because adding it later is non-breaking
 
 ## v1.4.0: Verification and polish ✅ DONE
 
-1. ✅ DONE **Expected-event checklist** (the optional "expected order" check is ⬜ NOT DONE)
+1. 🗑 REMOVED after 1.0.5 (was ✅ DONE) **Expected-event checklist**
    ```kotlin
    OGEventBoxLog.expect("login_start", "login_success", "purchase")
    ```
    Show a checklist tab or strip: fired ✓ / missing ○, with a count of times fired. Optionally
    allow an expected order. This turns Event Box from a viewer into a verification tool.
 2. ✅ DONE **Source tags:** `log(name, params, source = "firebase")`, so you can tell events from
-   Firebase, AppsFlyer, Mixpanel and others apart and filter by source with a chip. Add
+   Firebase, AppsFlyer, Mixpanel and others apart and filter by source with a chip. (After 1.0.5: by typing the source name in search; the chips are 🗑 REMOVED.) Add
    `source: String? = null` to the event model.
 3. ✅ DONE (used when the log is over 100k characters) **Session export to a file:** save the session JSON in the app cache dir and share it with a
    `FileProvider`, for long sessions that don't fit in an intent text extra.
@@ -223,4 +247,4 @@ Keep it out of 1.1.0 unless it's needed, because adding it later is non-breaking
 - ✅ DONE Nothing new throws into the host app: wrap work in `runCatching` like the existing `log()` paths.
 - ✅ DONE When the kill switch is off, nothing new allocates or records.
 - Update the README feature list and the installation version when each version is released.
-- ✅ Feature list DONE. ✅ Install version bumped to 1.0.5.
+- ✅ Feature list DONE. ✅ Install version bumped to 1.0.6.

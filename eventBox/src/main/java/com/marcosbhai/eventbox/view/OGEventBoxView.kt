@@ -1,10 +1,6 @@
 package com.marcosbhai.eventbox.view
 
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
-import android.animation.AnimatorSet
 import android.animation.ArgbEvaluator
-import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -17,15 +13,11 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Outline
 import android.graphics.PointF
-import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.text.Editable
-import android.text.SpannableStringBuilder
-import android.text.Spanned
 import android.text.TextWatcher
-import android.text.style.ForegroundColorSpan
-import android.text.style.StyleSpan
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -36,7 +28,6 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
-import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
@@ -51,15 +42,18 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.Insets
+import androidx.core.view.AccessibilityDelegateCompat
 import androidx.core.view.ViewCompat
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import com.marcosbhai.eventbox.OGEventBoxLog
 import com.marcosbhai.eventbox.R
+import com.marcosbhai.eventbox.data.OGEventBoxRepository
+import com.marcosbhai.eventbox.data.OGEventBoxStore
 import com.marcosbhai.eventbox.filter.OGEventBoxExport
 import com.marcosbhai.eventbox.filter.OGEventBoxQuery
 import com.marcosbhai.eventbox.model.OGEventBoxDebugEvent
-import com.marcosbhai.eventbox.model.OGEventBoxFilter
 import com.marcosbhai.eventbox.viewmodel.OGEventBoxViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -69,6 +63,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
@@ -89,10 +84,8 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
     private val titleView: TextView
     private val countView: TextView
     private val headerSpacer: View
-    private val clearButton: TextView
+    private val clearButton: ImageButton
     private val pinButton: ImageButton
-    private val resizeButton: ImageButton
-    private val minimizeButton: ImageButton
     private val recycler: RecyclerView
     private val layoutManager: LinearLayoutManager
     private val adapter: OGEventBoxAdapter
@@ -101,11 +94,10 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
     private val resizeHandleBar: View
     private val emptyView: TextView
     private val droppedView: TextView
+    private val tipView: TextView
+    private val undoPill: TextView
     private val jumpPill: TextView
-    private val expectedScroll: View
-    private val expectedView: TextView
     private val pauseButton: ImageButton
-    private val chipRow: LinearLayout
     private val bubble: View
     private val bubbleIcon: ImageView
     private val bubbleBadge: TextView
@@ -114,7 +106,6 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
     private val searchInput: EditText
     private val searchClearButton: ImageButton
     private val shareButton: ImageButton
-    private val filterChips: Map<OGEventBoxFilter, TextView>
 
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
     private val headerButtonHeight = resources.getDimensionPixelSize(R.dimen.og_event_box_header_button_height)
@@ -123,14 +114,18 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
     private val closeSizePx = resources.getDimensionPixelSize(R.dimen.og_event_box_close_size)
     private val closeMarginPx = resources.getDimensionPixelSize(R.dimen.og_event_box_close_margin)
     private val closeSlackPx = resources.getDimensionPixelSize(R.dimen.og_event_box_close_slack)
+    private val headerButtonWidth = resources.getDimensionPixelSize(R.dimen.og_event_box_header_button_width)
+    private val headerButtonGap = resources.getDimensionPixelSize(R.dimen.og_event_box_header_button_gap)
+    private val headerIconSize = resources.getDimensionPixelSize(R.dimen.og_event_box_header_icon_size)
+    private val headerTitleMargin = resources.getDimensionPixelSize(R.dimen.og_event_box_header_title_margin)
+    private val headerCountMargin = resources.getDimensionPixelSize(R.dimen.og_event_box_header_count_margin)
+    private val pivotInset = resources.getDimensionPixelSize(R.dimen.og_event_box_panel_pivot_inset)
+    private val defaultListHeight = resources.getDimensionPixelSize(R.dimen.og_event_box_list_height)
+    private val minListHeight = resources.getDimensionPixelSize(R.dimen.og_event_box_min_list_height)
     private val indexColor = ContextCompat.getColor(context, R.color.og_event_box_index)
     private val nameColor = ContextCompat.getColor(context, R.color.og_event_box_name)
-    private val latestColor = ContextCompat.getColor(context, R.color.og_event_box_name_latest)
-    private val missingColor = ContextCompat.getColor(context, R.color.og_event_box_expect_missing)
     private val pinnedTint = ContextCompat.getColor(context, R.color.og_event_box_accent)
     private val iconTint = ContextCompat.getColor(context, R.color.og_event_box_name)
-    private val chipColor = ContextCompat.getColor(context, R.color.og_event_box_chip)
-    private val chipSelectedColor = ContextCompat.getColor(context, R.color.og_event_box_chip_selected)
 
     private var boxWindowManager: WindowManager? = null
     private var boxWindowParams: WindowManager.LayoutParams? = null
@@ -141,10 +136,13 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
 
     private var dragInProgress = false
     private var settleAnimator: ValueAnimator? = null
-    private var blinkAnimator: AnimatorSet? = null
     private var handleHighlightAnimator: ValueAnimator? = null
+    private var resizeResetAnimator: ValueAnimator? = null
     private var isHandleHighlighted = false
     private var isHeaderMirrored: Boolean? = null
+
+    /** Declared before init: init builds the header, and a later initializer would reset this. */
+    private var headerFitWatched = false
     private var expandedEventIndex: Int? = null
 
     /** True while the box window has dropped FLAG_NOT_FOCUSABLE so the search field can type. */
@@ -157,24 +155,37 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
     private var unseenBelow = 0
     private var lastRenderedLatestIndex = 0
 
-    /** Source tags that currently have a chip, so chips are only rebuilt when this changes. */
-    private var chipSources: List<String> = emptyList()
-
     private var scope: CoroutineScope? = null
     private val autoShrinkRunnable = Runnable {
         when {
             viewModel.isPinned -> Unit
             // Never shrink under someone who is typing; look again later.
             isSearchInputFocused -> scheduleAutoShrink()
+            // Let the one-time tip and the undo offer finish before the panel goes away.
+            tipView.isVisible || undoPill.isVisible -> scheduleAutoShrink()
             else -> collapse(animate = true)
         }
     }
+
+    /** What the last Clear removed, while its undo pill is still offered. */
+    private var pendingClear: OGEventBoxRepository.ClearedLog? = null
+    private val commitClearRunnable = Runnable { commitPendingClear() }
     private val applyQueryRunnable = Runnable {
         viewModel.setQuery(searchInput.text?.toString().orEmpty())
         renderEvents(viewModel.events.value)
     }
     private val bubbleFadeRunnable = Runnable {
         bubble.animate().alpha(BUBBLE_IDLE_ALPHA).setDuration(BUBBLE_FADE_MS).start()
+    }
+    private val hideTipRunnable = Runnable { hideGestureTip() }
+
+    /** True while a finger is on the resize handle, so the open-time pulse never fights a drag. */
+    private var isHandleDragging = false
+    private val handlePulseOnRunnable = Runnable {
+        if (!isHandleDragging) setHandleHighlighted(true)
+    }
+    private val handlePulseOffRunnable = Runnable {
+        if (!isHandleDragging) setHandleHighlighted(false)
     }
 
     init {
@@ -187,8 +198,6 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         headerSpacer = findViewById(R.id.og_event_box_spacer)
         clearButton = findViewById(R.id.og_event_box_clear)
         pinButton = findViewById(R.id.og_event_box_pin)
-        resizeButton = findViewById(R.id.og_event_box_resize)
-        minimizeButton = findViewById(R.id.og_event_box_minimize)
         recycler = findViewById(R.id.og_event_box_list)
         contentContainer = findViewById(R.id.og_event_box_content_container)
         resizeHandle = findViewById(R.id.og_event_box_resize_handle)
@@ -197,11 +206,23 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         resizeHandleBar.backgroundTintList = ColorStateList.valueOf(indexColor)
         emptyView = findViewById(R.id.og_event_box_empty)
         droppedView = findViewById(R.id.og_event_box_dropped)
+        tipView = findViewById(R.id.og_event_box_tip)
+        tipView.setOnClickListener { hideGestureTip() }
+        undoPill = findViewById(R.id.og_event_box_undo)
+        undoPill.setOnClickListener { undoClear() }
+        ViewCompat.setAccessibilityDelegate(undoPill, object : AccessibilityDelegateCompat() {
+            override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfoCompat) {
+                super.onInitializeAccessibilityNodeInfo(host, info)
+                info.addAction(
+                    AccessibilityNodeInfoCompat.AccessibilityActionCompat(
+                        AccessibilityNodeInfoCompat.ACTION_CLICK,
+                        context.getString(R.string.og_event_box_undo),
+                    )
+                )
+            }
+        })
         jumpPill = findViewById(R.id.og_event_box_jump)
-        expectedScroll = findViewById(R.id.og_event_box_expected_scroll)
-        expectedView = findViewById(R.id.og_event_box_expected)
         pauseButton = findViewById(R.id.og_event_box_pause)
-        chipRow = findViewById(R.id.og_event_box_filter_chips)
 
         layoutManager = LinearLayoutManager(context)
         adapter = OGEventBoxAdapter(
@@ -238,28 +259,19 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         searchInput = findViewById(R.id.og_event_box_search_input)
         searchClearButton = findViewById(R.id.og_event_box_search_clear)
         shareButton = findViewById(R.id.og_event_box_share)
-        filterChips = linkedMapOf(
-            OGEventBoxFilter.ALL to findViewById(R.id.og_event_box_filter_all),
-            OGEventBoxFilter.WARNINGS to findViewById(R.id.og_event_box_filter_warnings),
-            OGEventBoxFilter.EVENTS to findViewById(R.id.og_event_box_filter_events),
-            OGEventBoxFilter.USER_PROPERTIES to findViewById(R.id.og_event_box_filter_user_props),
-        )
 
-        clearButton.setOnClickListener {
-            expandedEventIndex = null
-            releaseSearchFocus()
-            viewModel.clearEvents()
-            syncSearchUi()
-            renderEvents(viewModel.events.value)
-            scheduleAutoShrink()
-        }
+        clearButton.setOnClickListener { clearWithUndo() }
         setUpSearch()
-        resizeButton.setOnClickListener {
-            blinkResizeHandle()
-            scheduleAutoShrink()
-        }
         resizeHandle.setOnTouchListener(ResizeTouchListener())
-        minimizeButton.setOnClickListener { collapse(animate = true) }
+        // TalkBack users cannot drag the handle, so expose the reset as its click action.
+        ViewCompat.replaceAccessibilityAction(
+            resizeHandle,
+            AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_CLICK,
+            context.getString(R.string.og_event_box_resize_reset),
+        ) { _, _ ->
+            resetPanelHeight()
+            true
+        }
         headerIcon.setOnClickListener { collapse(animate = true) }
         headerIcon.setOnLongClickListener {
             cyclePanelAlpha()
@@ -267,6 +279,24 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
             true
         }
         headerIcon.contentDescription = context.getString(R.string.og_event_box_minimize)
+        // Name both logo gestures for TalkBack, so "double-tap and hold" announces what it does.
+        ViewCompat.setAccessibilityDelegate(headerIcon, object : AccessibilityDelegateCompat() {
+            override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfoCompat) {
+                super.onInitializeAccessibilityNodeInfo(host, info)
+                info.addAction(
+                    AccessibilityNodeInfoCompat.AccessibilityActionCompat(
+                        AccessibilityNodeInfoCompat.ACTION_CLICK,
+                        context.getString(R.string.og_event_box_minimize),
+                    )
+                )
+                info.addAction(
+                    AccessibilityNodeInfoCompat.AccessibilityActionCompat(
+                        AccessibilityNodeInfoCompat.ACTION_LONG_CLICK,
+                        context.getString(R.string.og_event_box_opacity_action),
+                    )
+                )
+            }
+        })
         pinButton.setOnClickListener {
             viewModel.togglePin()
             updatePinButton()
@@ -282,11 +312,66 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         updatePinButton()
         applyCollapsedState(viewModel.isCollapsed)
         syncSearchUi()
+        // The opacity the tester picked last time wins over the app's default.
+        OGEventBoxStore.panelAlpha(context)?.let { OGEventBoxRepository.panelAlpha = it }
         applyPanelAlpha()
     }
 
     // =========================================================================
-    // Search, filter chips, copy and share
+    // Clear with undo
+    // =========================================================================
+
+    private fun clearWithUndo() {
+        val before = viewModel.events.value
+        if (before.isEmpty() && pendingClear == null) return
+        // A second Clear while the first can still be undone makes the first one final.
+        commitPendingClear()
+        expandedEventIndex = null
+        releaseSearchFocus()
+        val cleared = viewModel.clearEventsUndoable()
+        syncSearchUi()
+        renderEvents(viewModel.events.value)
+        clearButton.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+
+        val count = cleared.events.sumOf { it.repeatCount }
+        if (count == 0) {
+            viewModel.commitClear()
+        } else {
+            pendingClear = cleared
+            undoPill.text = resources.getQuantityString(R.plurals.og_event_box_cleared, count, count)
+            undoPill.isVisible = true
+            removeCallbacks(commitClearRunnable)
+            postDelayed(commitClearRunnable, UNDO_DURATION_MS)
+        }
+        scheduleAutoShrink()
+    }
+
+    private fun undoClear() {
+        val cleared = pendingClear ?: return
+        pendingClear = null
+        removeCallbacks(commitClearRunnable)
+        undoPill.isVisible = false
+        viewModel.undoClear(cleared)
+        stickToBottom = true
+        unseenBelow = 0
+        syncSearchUi()
+        renderEvents(viewModel.events.value)
+        scrollToLatest(smooth = false)
+        undoPill.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+        scheduleAutoShrink()
+    }
+
+    /** Ends the undo offer: the cleared entries are gone for good. */
+    private fun commitPendingClear() {
+        removeCallbacks(commitClearRunnable)
+        undoPill.isVisible = false
+        if (pendingClear == null) return
+        pendingClear = null
+        viewModel.commitClear()
+    }
+
+    // =========================================================================
+    // Search, copy and share
     // =========================================================================
 
     /** True while the search field holds focus, i.e. someone may be typing. */
@@ -335,16 +420,6 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
             applyQueryRunnable.run()
             scheduleAutoShrink()
         }
-        filterChips.forEach { (filter, chip) ->
-            chip.setOnClickListener {
-                viewModel.setFilter(filter)
-                // "All" means everything, including every source.
-                if (filter == OGEventBoxFilter.ALL) viewModel.setSourceFilter(null)
-                updateFilterChips()
-                renderEvents(viewModel.events.value)
-                scheduleAutoShrink()
-            }
-        }
         shareButton.setOnClickListener {
             shareVisibleEvents()
             scheduleAutoShrink()
@@ -371,36 +446,12 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         )
     }
 
-    /** One chip per source tag seen in the log, after the fixed chips. Rebuilt only on change. */
-    private fun syncSourceChips(events: List<OGEventBoxDebugEvent>) {
-        val sources = viewModel.sources(events)
-        if (sources == chipSources) return
-        chipSources = sources
-        while (chipRow.childCount > filterChips.size) chipRow.removeViewAt(chipRow.childCount - 1)
-        for (source in sources) {
-            val chip = TextView(context, null, 0, R.style.OGEventBox_Chip).apply {
-                text = source
-                tag = source
-                setOnClickListener {
-                    viewModel.setSourceFilter(if (viewModel.sourceFilter == source) null else source)
-                    updateFilterChips()
-                    renderEvents(viewModel.events.value)
-                    scheduleAutoShrink()
-                }
-            }
-            chipRow.addView(chip, LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT, dpToPx(28f),
-            ).apply { marginStart = dpToPx(6f) })
-        }
-        // A source chip whose events were cleared away can't stay selected.
-        if (viewModel.sourceFilter != null && viewModel.sourceFilter !in sources) viewModel.setSourceFilter(null)
-        updateFilterChips()
-    }
-
     private fun openSearch() {
         viewModel.openSearch()
         syncSearchUi()
-        // Chips work without the keyboard; the field asks for it only when it is touched.
+        // The bar is only a text field now, so go straight to typing.
+        grantWindowFocus()
+        searchInput.requestFocus()
     }
 
     private fun closeSearch() {
@@ -411,7 +462,7 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         renderEvents(viewModel.events.value)
     }
 
-    /** Makes the search bar, field and chips match the view model (also after re-creation). */
+    /** Makes the search bar and field match the view model (also after re-creation). */
     private fun syncSearchUi() {
         val open = viewModel.isSearchOpen
         searchBar.isVisible = open
@@ -421,23 +472,7 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         )
         if (searchInput.text?.toString() != viewModel.query) searchInput.setText(viewModel.query)
         searchClearButton.isVisible = viewModel.query.isNotEmpty()
-        updateFilterChips()
         updatePauseButton()
-    }
-
-    private fun updateFilterChips() {
-        val selected = viewModel.filter
-        filterChips.forEach { (filter, chip) ->
-            chip.backgroundTintList = ColorStateList.valueOf(if (filter == selected) chipSelectedColor else chipColor)
-            chip.isSelected = filter == selected
-        }
-        for (i in filterChips.size until chipRow.childCount) {
-            val chip = chipRow.getChildAt(i)
-            val selectedSource = chip.tag == viewModel.sourceFilter
-            chip.backgroundTintList = ColorStateList.valueOf(if (selectedSource) chipSelectedColor else chipColor)
-            chip.isSelected = selectedSource
-        }
-        searchButton.setColorFilter(if (viewModel.isSearchOpen || viewModel.isFiltering) pinnedTint else iconTint)
     }
 
     /**
@@ -648,9 +683,6 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         newScope.launch {
             viewModel.events.collect { renderEvents(it) }
         }
-        newScope.launch {
-            viewModel.expectedEvents.collect { renderExpected(viewModel.events.value) }
-        }
         if (viewModel.isCollapsed) highlightBubble(scheduleFade = true) else scheduleAutoShrink()
     }
 
@@ -658,9 +690,12 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         removeCallbacks(autoShrinkRunnable)
         removeCallbacks(bubbleFadeRunnable)
         removeCallbacks(applyQueryRunnable)
+        removeCallbacks(hideTipRunnable)
+        cancelHandlePulse()
+        commitPendingClear()
+        resizeResetAnimator?.cancel()
         windowFocusGranted = false
         settleAnimator?.cancel()
-        blinkAnimator?.cancel()
         handleHighlightAnimator?.cancel()
         scope?.cancel()
         scope = null
@@ -675,7 +710,6 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         removeCallbacks(autoShrinkRunnable)
         removeCallbacks(bubbleFadeRunnable)
         settleAnimator?.cancel()
-        blinkAnimator?.cancel()
         handleHighlightAnimator?.cancel()
         removeCloseTargetWindow()
         closeTargetShown = false
@@ -698,7 +732,6 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         val latestIndex = events.lastOrNull()?.index ?: 0
         val words = OGEventBoxQuery.highlightWords(viewModel.query)
 
-        syncSourceChips(events)
         countView.text = if (filtering) {
             context.getString(R.string.og_event_box_count_filtered, visible.size, events.size)
         } else {
@@ -707,7 +740,6 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         emptyView.isVisible = visible.isEmpty()
         emptyView.setText(if (events.isNotEmpty() && filtering) R.string.og_event_box_no_match else R.string.og_event_box_empty)
         renderDropped()
-        renderExpected(events)
 
         if (expandedEventIndex != null && visible.none { it.index == expandedEventIndex }) {
             expandedEventIndex = null
@@ -757,29 +789,6 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         droppedView.isVisible = dropped > 0
         if (dropped > 0) {
             droppedView.text = resources.getQuantityString(R.plurals.og_event_box_dropped, dropped, dropped, viewModel.maxEvents)
-        }
-    }
-
-    /** "EXPECTED 1/2  ✓ login_start ×2  ○ purchase": fired names in green, missing ones in amber. */
-    private fun renderExpected(events: List<OGEventBoxDebugEvent>) {
-        val counts = viewModel.expectedCounts(events)
-        expectedScroll.isVisible = counts.isNotEmpty()
-        if (counts.isEmpty()) return
-        val fired = counts.count { it.second > 0 }
-        expectedView.text = SpannableStringBuilder().apply {
-            append(context.getString(R.string.og_event_box_expected, fired, counts.size))
-            setSpan(StyleSpan(Typeface.BOLD), 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-            for ((name, count) in counts) {
-                append("   ")
-                val start = length
-                if (count > 0) {
-                    append("✓ ").append(name)
-                    if (count > 1) append(" ×").append(count.toString())
-                } else {
-                    append("○ ").append(name)
-                }
-                setSpan(ForegroundColorSpan(if (count > 0) latestColor else missingColor), start, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-            }
         }
     }
 
@@ -852,6 +861,7 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         val current = OGEventBoxLog.panelAlpha
         val next = PANEL_ALPHA_STEPS.firstOrNull { it < current - 0.01f } ?: PANEL_ALPHA_STEPS.first()
         OGEventBoxLog.panelAlpha = next
+        OGEventBoxStore.setPanelAlpha(context, next)
         applyPanelAlpha()
         runCatching {
             Toast.makeText(
@@ -904,133 +914,47 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         if (isHeaderMirrored == isRightSide) return
         isHeaderMirrored = isRightSide
 
+        // Sizes come from dimens.xml (og_event_box_header_*), the same values the layout uses.
         header.removeAllViews()
-        val density = resources.displayMetrics.density
-        fun dp(value: Float): Int = (value * density).roundToInt()
+        val wrap = LinearLayout.LayoutParams.WRAP_CONTENT
+        fun lp(width: Int, height: Int, start: Int = 0, weight: Float = 0f) =
+            LinearLayout.LayoutParams(width, height, weight).apply {
+                gravity = Gravity.CENTER_VERTICAL
+                marginStart = start
+            }
+        fun button(start: Int) = lp(headerButtonWidth, headerButtonHeight, start)
+        val spacer = lp(0, 1, weight = 1f)
 
         if (isRightSide) {
-            // Mirrored layout for right-side bubble:
-            // [Clear] [Minimize] [Resize] [Pin] ---Spacer--- [Title] [Count] [Logo]
-            val clearLp = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                headerButtonHeight
-            ).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginStart = 0
-            }
-            val minLp = LinearLayout.LayoutParams(dp(32f), headerButtonHeight).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginStart = dp(6f)
-            }
-            val resizeLp = LinearLayout.LayoutParams(dp(32f), headerButtonHeight).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginStart = dp(4f)
-            }
-            val pinLp = LinearLayout.LayoutParams(dp(32f), headerButtonHeight).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginStart = dp(4f)
-            }
-            val spacerLp = LinearLayout.LayoutParams(0, dp(1f), 1f).apply {
-                gravity = Gravity.CENTER_VERTICAL
-            }
-            val titleLp = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginStart = 0
-            }
-            val countLp = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginStart = dp(8f)
-            }
-            val iconLp = LinearLayout.LayoutParams(dp(34f), dp(34f)).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginStart = dp(10f)
-            }
-
-            header.addView(clearButton, clearLp)
-            header.addView(minimizeButton, minLp)
-            header.addView(resizeButton, resizeLp)
-            header.addView(pinButton, pinLp)
-            header.addView(searchButton, LinearLayout.LayoutParams(dp(32f), headerButtonHeight).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginStart = dp(4f)
-            })
-            header.addView(headerSpacer, spacerLp)
-            header.addView(titleView, titleLp)
-            header.addView(countView, countLp)
-            header.addView(headerIcon, iconLp)
+            // Mirrored for a right-side bubble:
+            // [Clear] [Pin] [Share] [Pause] [Search] ---Spacer--- [Title] [Count] [Logo]
+            header.addView(clearButton, button(0))
+            header.addView(pinButton, button(headerButtonGap))
+            header.addView(shareButton, button(headerButtonGap))
+            header.addView(pauseButton, button(headerButtonGap))
+            header.addView(searchButton, button(headerButtonGap))
+            header.addView(headerSpacer, spacer)
+            header.addView(titleView, lp(wrap, wrap))
+            header.addView(countView, lp(wrap, wrap, headerCountMargin))
+            header.addView(headerIcon, lp(headerIconSize, headerIconSize, headerTitleMargin))
         } else {
-            // Standard layout for left-side bubble:
-            // [Logo] [Title] [Count] ---Spacer--- [Search] [Pin] [Resize] [Minimize] [Clear]
-            val iconLp = LinearLayout.LayoutParams(dp(34f), dp(34f)).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginStart = 0
-            }
-            val titleLp = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginStart = dp(10f)
-            }
-            val countLp = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginStart = dp(8f)
-            }
-            val spacerLp = LinearLayout.LayoutParams(0, dp(1f), 1f).apply {
-                gravity = Gravity.CENTER_VERTICAL
-            }
-            val searchLp = LinearLayout.LayoutParams(dp(32f), headerButtonHeight).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginStart = 0
-            }
-            val pinLp = LinearLayout.LayoutParams(dp(32f), headerButtonHeight).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginStart = dp(4f)
-            }
-            val resizeLp = LinearLayout.LayoutParams(dp(32f), headerButtonHeight).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginStart = dp(4f)
-            }
-            val minLp = LinearLayout.LayoutParams(dp(32f), headerButtonHeight).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginStart = dp(4f)
-            }
-            val clearLp = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                headerButtonHeight
-            ).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginStart = dp(6f)
-            }
-
-            header.addView(headerIcon, iconLp)
-            header.addView(titleView, titleLp)
-            header.addView(countView, countLp)
-            header.addView(headerSpacer, spacerLp)
-            header.addView(searchButton, searchLp)
-            header.addView(pinButton, pinLp)
-            header.addView(resizeButton, resizeLp)
-            header.addView(minimizeButton, minLp)
-            header.addView(clearButton, clearLp)
+            // [Logo] [Title] [Count] ---Spacer--- [Search] [Pause] [Share] [Pin] [Clear]
+            header.addView(headerIcon, lp(headerIconSize, headerIconSize))
+            header.addView(titleView, lp(wrap, wrap, headerTitleMargin))
+            header.addView(countView, lp(wrap, wrap, headerCountMargin))
+            header.addView(headerSpacer, spacer)
+            header.addView(searchButton, button(0))
+            header.addView(pauseButton, button(headerButtonGap))
+            header.addView(shareButton, button(headerButtonGap))
+            header.addView(pinButton, button(headerButtonGap))
+            header.addView(clearButton, button(headerButtonGap))
         }
 
-        resizeButton.isVisible = OGEventBoxLog.isPanelResizingEnabled()
         if (!headerFitWatched) {
             headerFitWatched = true
             header.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> fitHeaderTitle() }
         }
     }
-
-    private var headerFitWatched = false
 
     /**
      * Narrow phones can't fit every header button next to the "EVENTS" title, so the title is
@@ -1064,11 +988,14 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         releaseSearchFocus()
         viewModel.collapse()
         removeCallbacks(autoShrinkRunnable)
+        cancelHandlePulse()
+        hideGestureTip()
+        commitPendingClear()
 
         val isRight = isBubbleOnRightSide()
         val panelWidth = (if (panel.width > 0) panel.width else (screenWidth() - marginPx * 2)).toFloat()
-        val pivotX = if (isRight) panelWidth - dpToPx(27f) else dpToPx(27f).toFloat()
-        val pivotY = dpToPx(27f).toFloat()
+        val pivotX = if (isRight) panelWidth - pivotInset else pivotInset.toFloat()
+        val pivotY = pivotInset.toFloat()
         panel.pivotX = pivotX
         panel.pivotY = pivotY
 
@@ -1187,8 +1114,8 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         if (!viewModel.isPaused) scrollToLatest(smooth = false)
 
         val panelWidth = (if (panel.width > 0) panel.width else min(screenWidth() - marginPx * 2, maxPanelWidthPx)).toFloat()
-        val pivotX = if (isRight) panelWidth - dpToPx(27f) else dpToPx(27f).toFloat()
-        val pivotY = dpToPx(27f).toFloat()
+        val pivotX = if (isRight) panelWidth - pivotInset else pivotInset.toFloat()
+        val pivotY = pivotInset.toFloat()
         panel.pivotX = pivotX
         panel.pivotY = pivotY
 
@@ -1206,7 +1133,44 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
                 .setInterpolator(DecelerateInterpolator(1.6f))
                 .start()
         }
+        showGestureTipOnce()
+        pulseResizeHandleIfUnused()
         scheduleAutoShrink()
+    }
+
+    /** The first time the panel ever opens, explain the logo gestures (and the resize handle). */
+    private fun showGestureTipOnce() {
+        if (OGEventBoxStore.isGestureTipSeen(context)) return
+        OGEventBoxStore.setGestureTipSeen(context)
+        tipView.setText(
+            if (OGEventBoxLog.isPanelResizingEnabled()) R.string.og_event_box_tip_with_resize
+            else R.string.og_event_box_tip
+        )
+        tipView.isVisible = true
+        removeCallbacks(hideTipRunnable)
+        postDelayed(hideTipRunnable, TIP_DURATION_MS)
+    }
+
+    private fun hideGestureTip() {
+        removeCallbacks(hideTipRunnable)
+        tipView.isVisible = false
+    }
+
+    /**
+     * Until the user has dragged the bottom handle once, light it up briefly each time the panel
+     * opens, so it is clear the panel can be resized from there.
+     */
+    private fun pulseResizeHandleIfUnused() {
+        cancelHandlePulse()
+        if (!OGEventBoxLog.isPanelResizingEnabled() || OGEventBoxStore.isResizeUsed(context)) return
+        postDelayed(handlePulseOnRunnable, HANDLE_PULSE_DELAY_MS)
+        postDelayed(handlePulseOffRunnable, HANDLE_PULSE_DELAY_MS + HANDLE_PULSE_HOLD_MS)
+    }
+
+    private fun cancelHandlePulse() {
+        removeCallbacks(handlePulseOnRunnable)
+        removeCallbacks(handlePulseOffRunnable)
+        if (!isHandleDragging) setHandleHighlighted(false, animate = false)
     }
 
     private fun applyCollapsedState(collapsed: Boolean) {
@@ -1220,7 +1184,8 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
             panel.layoutParams = panelLp
         }
         if (!collapsed && OGEventBoxLog.isPanelResizingEnabled()) {
-            val custom = viewModel.customPanelHeight
+            // This session's height, else the one the tester saved last time.
+            val custom = viewModel.customPanelHeight ?: savedPanelHeightPx()?.also { viewModel.customPanelHeight = it }
             if (custom != null && custom > 0 && contentContainer.layoutParams.height != custom) {
                 contentContainer.layoutParams.height = custom
             }
@@ -1241,8 +1206,8 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
             bubble.layoutParams = bubbleLp
         }
         val pw = if (panel.width > 0) panel.width else panelWidth
-        panel.pivotX = if (isRight) (pw - dpToPx(27f)).toFloat() else dpToPx(27f).toFloat()
-        panel.pivotY = dpToPx(27f).toFloat()
+        panel.pivotX = if (isRight) (pw - pivotInset).toFloat() else pivotInset.toFloat()
+        panel.pivotY = pivotInset.toFloat()
         requestLayout()
     }
 
@@ -1271,7 +1236,6 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
 
     fun updateResizingState() {
         val enabled = OGEventBoxLog.isPanelResizingEnabled()
-        resizeButton.isVisible = enabled
         resizeHandle.isVisible = enabled
         if (!enabled) {
             setHandleHighlighted(false, animate = false)
@@ -1321,37 +1285,6 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
                 val color = animator.animatedValue as Int
                 resizeHandleBar.backgroundTintList = ColorStateList.valueOf(color)
             }
-            start()
-        }
-    }
-
-    private fun blinkResizeHandle() {
-        blinkAnimator?.cancel()
-        handleHighlightAnimator?.cancel()
-        resizeHandleBar.animate().cancel()
-        isHandleHighlighted = false
-
-        val highlightColor = OGEventBoxLog.bubbleBackgroundColor.takeIf { it != 0 }
-            ?: ContextCompat.getColor(context, R.color.og_event_box_name_latest)
-        resizeHandleBar.backgroundTintList = ColorStateList.valueOf(highlightColor)
-
-        // Two complete blinks: 1f -> 0.15f -> 1f -> 0.15f -> 0.75f
-        val alphaAnim = ObjectAnimator.ofFloat(resizeHandleBar, View.ALPHA, 1f, 0.15f, 1f, 0.15f, 0.75f)
-        val scaleXAnim = ObjectAnimator.ofFloat(resizeHandleBar, View.SCALE_X, 1.4f, 1f, 1.4f, 1f, 1.0f)
-        val scaleYAnim = ObjectAnimator.ofFloat(resizeHandleBar, View.SCALE_Y, 1.25f, 1f, 1.25f, 1f, 1.0f)
-
-        blinkAnimator = AnimatorSet().apply {
-            playTogether(alphaAnim, scaleXAnim, scaleYAnim)
-            duration = 750L
-            interpolator = AccelerateDecelerateInterpolator()
-            addListener(object : AnimatorListenerAdapter() {
-                override fun onAnimationEnd(animation: Animator) {
-                    setHandleHighlighted(false, animate = false)
-                }
-                override fun onAnimationCancel(animation: Animator) {
-                    setHandleHighlighted(false, animate = false)
-                }
-            })
             start()
         }
     }
@@ -1430,59 +1363,133 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         }
     }
 
+    /**
+     * Drag the bottom handle to resize the event list; double-tap it to go back to the default
+     * height. A drag only starts past the touch slop, so taps never nudge the height.
+     */
     private inner class ResizeTouchListener : OnTouchListener {
         private var downRawY = 0f
         private var initialHeight = 0
         private var isResizing = false
+        private var dragStarted = false
+        private var atLimit = false
+        private var lastTapUpTime = 0L
 
         override fun onTouch(view: View, event: MotionEvent): Boolean {
             if (!OGEventBoxLog.isPanelResizingEnabled()) return false
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
                     view.parent?.requestDisallowInterceptTouchEvent(true)
+                    resizeResetAnimator?.cancel()
                     downRawY = event.rawY
                     initialHeight = contentContainer.height.takeIf { it > 0 }
                         ?: contentContainer.measuredHeight.takeIf { it > 0 }
-                        ?: resources.getDimensionPixelSize(R.dimen.og_event_box_list_height)
+                        ?: defaultListHeight
                     isResizing = true
+                    dragStarted = false
+                    atLimit = false
+                    isHandleDragging = true
+                    removeCallbacks(handlePulseOnRunnable)
+                    removeCallbacks(handlePulseOffRunnable)
                     removeCallbacks(autoShrinkRunnable)
                     return true
                 }
 
                 MotionEvent.ACTION_MOVE -> {
                     if (!isResizing) return false
+                    if (!dragStarted) {
+                        if (abs(event.rawY - downRawY) < touchSlop) return true
+                        // Measure from here, so the panel doesn't jump by the slop distance.
+                        dragStarted = true
+                        downRawY = event.rawY
+                        lastTapUpTime = 0L
+                        view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                        if (!OGEventBoxStore.isResizeUsed(context)) OGEventBoxStore.setResizeUsed(context)
+                    }
                     val dy = (event.rawY - downRawY).roundToInt()
-                    val minHeight = resources.getDimensionPixelSize(R.dimen.og_event_box_min_list_height)
-                    val insets = systemBarInsets()
-                    val otherHeight = height - contentContainer.height
-                    val maxAvailableBelow = screenHeight() - insets.bottom - positionY().toInt() - otherHeight
-                    val maxScreenHeight = (screenHeight() * 0.85f).roundToInt()
-                    val maxHeight = max(minHeight, min(maxScreenHeight, maxAvailableBelow))
-
-                    val targetHeight = (initialHeight + dy).coerceIn(minHeight, maxHeight)
+                    val maxHeight = maxListHeight()
+                    val wanted = initialHeight + dy
+                    val targetHeight = wanted.coerceIn(minListHeight, maxHeight)
                     if (contentContainer.layoutParams.height != targetHeight) {
                         contentContainer.layoutParams.height = targetHeight
                         contentContainer.requestLayout()
                         viewModel.customPanelHeight = targetHeight
                     }
+                    // One tick when the drag runs into the smallest or largest height.
+                    val clamped = wanted != targetHeight
+                    if (clamped && !atLimit) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                    atLimit = clamped
 
                     // Widen and highlight the bar while dragging, whether growing or shrinking the panel
-                    setHandleHighlighted(dy != 0)
-
+                    setHandleHighlighted(true)
                     return true
                 }
 
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    if (isResizing) {
-                        isResizing = false
-                        setHandleHighlighted(false)
-                        view.parent?.requestDisallowInterceptTouchEvent(false)
-                        scheduleAutoShrink()
-                        return true
+                    if (!isResizing) return false
+                    isResizing = false
+                    isHandleDragging = false
+                    setHandleHighlighted(false)
+                    view.parent?.requestDisallowInterceptTouchEvent(false)
+                    if (dragStarted) {
+                        savePanelHeight(viewModel.customPanelHeight)
+                    } else if (event.actionMasked == MotionEvent.ACTION_UP) {
+                        if (event.eventTime - lastTapUpTime <= ViewConfiguration.getDoubleTapTimeout()) {
+                            lastTapUpTime = 0L
+                            resetPanelHeight()
+                        } else {
+                            lastTapUpTime = event.eventTime
+                        }
                     }
+                    scheduleAutoShrink()
+                    return true
                 }
             }
             return false
+        }
+    }
+
+    /** Tallest the event list may get: what fits below the panel's top, and at most 85% of the screen. */
+    private fun maxListHeight(): Int {
+        val insets = systemBarInsets()
+        val otherHeight = height - contentContainer.height
+        val maxAvailableBelow = screenHeight() - insets.bottom - positionY().toInt() - otherHeight
+        val maxScreenHeight = (screenHeight() * 0.85f).roundToInt()
+        return max(minListHeight, min(maxScreenHeight, maxAvailableBelow))
+    }
+
+    private fun savePanelHeight(heightPx: Int?) {
+        val density = resources.displayMetrics.density
+        OGEventBoxStore.setPanelHeightDp(context, heightPx?.let { it / density })
+    }
+
+    /** The height saved by an earlier drag, in px for this screen, or `null` for the default. */
+    private fun savedPanelHeightPx(): Int? {
+        val dp = OGEventBoxStore.panelHeightDp(context) ?: return null
+        val px = (dp * resources.displayMetrics.density).roundToInt()
+        return px.coerceIn(minListHeight, max(minListHeight, (screenHeight() * 0.85f).roundToInt()))
+    }
+
+    /** Double-tap on the handle: animate back to the default height and forget the saved one. */
+    private fun resetPanelHeight() {
+        viewModel.customPanelHeight = null
+        savePanelHeight(null)
+        resizeHandle.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+        val from = contentContainer.height.takeIf { it > 0 } ?: contentContainer.layoutParams.height
+        resizeResetAnimator?.cancel()
+        if (from == defaultListHeight || from <= 0) {
+            contentContainer.layoutParams.height = defaultListHeight
+            contentContainer.requestLayout()
+            return
+        }
+        resizeResetAnimator = ValueAnimator.ofInt(from, defaultListHeight).apply {
+            duration = RESIZE_RESET_MS
+            interpolator = DecelerateInterpolator()
+            addUpdateListener {
+                contentContainer.layoutParams.height = it.animatedValue as Int
+                contentContainer.requestLayout()
+            }
+            start()
         }
     }
 
@@ -1724,6 +1731,11 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
 
     companion object {
         private const val AUTO_SHRINK_DELAY_MS = 6_000L
+        private const val TIP_DURATION_MS = 8_000L
+        private const val UNDO_DURATION_MS = 4_000L
+        private const val RESIZE_RESET_MS = 200L
+        private const val HANDLE_PULSE_DELAY_MS = 350L
+        private const val HANDLE_PULSE_HOLD_MS = 700L
         private const val QUERY_DEBOUNCE_MS = 150L
         private const val BUBBLE_HIGHLIGHT_MS = 2_500L
         private const val ANIMATION_MS = 150L

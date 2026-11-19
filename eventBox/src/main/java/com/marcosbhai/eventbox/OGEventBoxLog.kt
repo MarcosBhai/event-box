@@ -168,6 +168,8 @@ object OGEventBoxLog {
      */
     @JvmStatic
     fun requestOverlayPermission(context: Context) {
+        // Before Android 6 the permission is granted at install time and this screen doesn't exist.
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M) return
         runCatching {
             val intent = android.content.Intent(
                 android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -256,7 +258,7 @@ object OGEventBoxLog {
 
     /**
      * Logs an event with parameters and a [source] tag (e.g. "firebase", "appsflyer"), so events
-     * from different SDKs can be told apart and filtered in the box.
+     * from different SDKs can be told apart and searched in the box.
      */
     @JvmStatic
     fun log(name: String, params: Map<String, Any?>?, source: String?) {
@@ -333,37 +335,6 @@ object OGEventBoxLog {
     /** Fluent setter for [duplicateWindowMs]. */
     @JvmStatic
     fun setDuplicateWindowMs(windowMs: Long): OGEventBoxLog = apply { this.duplicateWindowMs = windowMs }
-
-    // =========================================================================
-    // 5c. Expected events checklist
-    // =========================================================================
-
-    /**
-     * Sets the events a test flow should fire. The panel then shows a checklist of which have
-     * fired (✓) and which are still missing (○). Replaces any earlier list; call with no names
-     * (or [clearExpectations]) to hide the checklist.
-     */
-    @JvmStatic
-    fun expect(vararg eventNames: String): OGEventBoxLog = apply {
-        OGEventBoxRepository.setExpectedEvents(eventNames.toList())
-    }
-
-    /** Removes the expected-events checklist. */
-    @JvmStatic
-    fun clearExpectations(): OGEventBoxLog = apply {
-        OGEventBoxRepository.setExpectedEvents(emptyList())
-    }
-
-    /** The names passed to [expect], in order. */
-    @get:JvmStatic
-    val expectedEvents: List<String> get() = OGEventBoxRepository.expectedEvents.value
-
-    /** Expected events that are not in the current log yet. Empty when all have fired. */
-    @JvmStatic
-    fun missingExpectedEvents(): List<String> {
-        val fired = OGEventBoxRepository.events.value.mapTo(HashSet()) { it.name }
-        return OGEventBoxRepository.expectedEvents.value.filter { it !in fired }
-    }
 
     // =========================================================================
     // 6. Bubble Styling & Appearance

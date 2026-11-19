@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Filter chips in the search bar. The selected chip is tinted with og_event_box_chip_selected in code. -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="@color/og_event_box_chip" />
-    <corners android:radius="14dp" />
-</shape>

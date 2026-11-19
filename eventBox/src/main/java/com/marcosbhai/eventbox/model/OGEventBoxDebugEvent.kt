@@ -18,7 +18,7 @@ data class OGEventBoxDebugEvent @JvmOverloads constructor(
     val warnings: List<String> = emptyList(),
     /**
      * Which SDK or code path sent the event (e.g. "firebase", "appsflyer"), or null when the
-     * caller didn't say. Shown as a tag and offered as a filter chip.
+     * caller didn't say. Shown as a tag on the row and matched by the search.
      */
     val source: String? = null,
     /**

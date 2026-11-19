@@ -12,17 +12,13 @@ data class OGEventBoxUiState(
     val remainingMinutes: Int = 0,
     /** Text typed into the search bar, or empty. */
     val query: String = "",
-    /** The selected quick filter chip. */
-    val filter: OGEventBoxFilter = OGEventBoxFilter.ALL,
-    /** [events] after [query] and [filter] are applied; equals [events] when nothing is set. */
+    /** [events] after [query] is applied; equals [events] when the query is empty. */
     val visibleEvents: List<OGEventBoxDebugEvent> = events,
     /** True while the search bar is open. */
     val isSearchOpen: Boolean = false,
-    /** The selected source chip, or null for every source. */
-    val sourceFilter: String? = null,
     /** True while the list is frozen. */
     val isPaused: Boolean = false,
 ) {
-    /** True when the query or filter is hiding some entries. */
-    val isFiltering: Boolean get() = query.isNotBlank() || filter != OGEventBoxFilter.ALL || sourceFilter != null
+    /** True when the search query is hiding some entries. */
+    val isFiltering: Boolean get() = query.isNotBlank()
 }

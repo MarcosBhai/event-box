@@ -3,7 +3,6 @@ package com.marcosbhai.eventbox
 import com.marcosbhai.eventbox.filter.OGEventBoxExport
 import com.marcosbhai.eventbox.filter.OGEventBoxQuery
 import com.marcosbhai.eventbox.model.OGEventBoxDebugEvent
-import com.marcosbhai.eventbox.model.OGEventBoxFilter
 import com.marcosbhai.eventbox.viewmodel.OGEventBoxViewModel
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -24,8 +23,8 @@ class OGEventBoxSearchTest {
     private val noParams = OGEventBoxDebugEvent(4, 4_000L, "app_open")
     private val all = listOf(login, purchase, userProp, noParams)
 
-    private fun names(query: String, filter: OGEventBoxFilter = OGEventBoxFilter.ALL) =
-        OGEventBoxQuery.apply(all, query, filter).map { it.name }
+    private fun names(query: String) =
+        OGEventBoxQuery.apply(all, query).map { it.name }
 
     @Test
     fun plainTermMatchesNameCaseInsensitive() {
@@ -58,17 +57,9 @@ class OGEventBoxSearchTest {
     }
 
     @Test
-    fun blankQueryAndAllFilterReturnSameList() {
-        assertSame(all, OGEventBoxQuery.apply(all, "   ", OGEventBoxFilter.ALL))
+    fun blankQueryReturnsSameList() {
+        assertSame(all, OGEventBoxQuery.apply(all, "   "))
         assertTrue(OGEventBoxQuery.parse("! ").isEmpty())
-    }
-
-    @Test
-    fun eachFilterSelectsItsEntries() {
-        assertEquals(listOf("purchase"), names("", OGEventBoxFilter.WARNINGS))
-        assertEquals(listOf("login_success", "purchase", "app_open"), names("", OGEventBoxFilter.EVENTS))
-        assertEquals(listOf("user_property: plan"), names("", OGEventBoxFilter.USER_PROPERTIES))
-        assertEquals(listOf("purchase"), names("usd", OGEventBoxFilter.EVENTS))
     }
 
     @Test
@@ -76,14 +67,36 @@ class OGEventBoxSearchTest {
         val bad = OGEventBoxDebugEvent(9, 0L, "weird", mapOf("x" to object {
             override fun toString(): String = throw IllegalStateException("boom")
         }))
-        assertFalse(OGEventBoxQuery.matches(bad, "boom", OGEventBoxFilter.ALL))
-        assertTrue(OGEventBoxQuery.matches(bad, "weird", OGEventBoxFilter.ALL))
+        assertFalse(OGEventBoxQuery.matches(bad, "boom"))
+        assertTrue(OGEventBoxQuery.matches(bad, "weird"))
         assertTrue(OGEventBoxExport.eventJson(bad).contains("\"x\": \"<unprintable>\""))
     }
 
     @Test
     fun highlightWordsSkipNegatedTermsAndUseValues() {
         assertEquals(listOf("login", "home"), OGEventBoxQuery.highlightWords("login screen:home !purchase"))
+    }
+
+    @Test
+    fun isKeywordsSelectByKind() {
+        assertEquals(listOf("purchase"), names("is:warning"))
+        assertEquals(listOf("purchase"), names("IS:WARNINGS"))
+        assertEquals(listOf("login_success", "user_property: plan", "app_open"), names("!is:warning"))
+        assertEquals(listOf("user_property: plan"), names("is:user_property"))
+        assertEquals(listOf("login_success", "purchase", "app_open"), names("is:event"))
+        assertEquals(listOf("purchase"), names("is:event usd"))
+        assertEquals(emptyList<String>(), names("is:repeated"))
+
+        val repeated = OGEventBoxDebugEvent(5, 5_000L, "tap", repeatCount = 3)
+        assertTrue(OGEventBoxQuery.matches(repeated, "is:repeated"))
+    }
+
+    @Test
+    fun isKeywordsAreNotHighlightedAndUnknownOnesSearchParams() {
+        assertEquals(listOf("usd"), OGEventBoxQuery.highlightWords("is:warning usd"))
+        val withIsParam = OGEventBoxDebugEvent(6, 0L, "x", mapOf("is" to "foo"))
+        assertTrue(OGEventBoxQuery.matches(withIsParam, "is:foo"))
+        assertFalse(OGEventBoxQuery.matches(withIsParam, "is:warning"))
     }
 
     @Test
@@ -110,11 +123,9 @@ class OGEventBoxSearchTest {
         val vm = OGEventBoxViewModel()
         vm.openSearch()
         vm.setQuery("login")
-        vm.setFilter(OGEventBoxFilter.WARNINGS)
         assertTrue(vm.isSearchOpen)
         assertTrue(vm.isFiltering)
         assertEquals("login", vm.uiState.value.query)
-        assertEquals(OGEventBoxFilter.WARNINGS, vm.uiState.value.filter)
 
         vm.closeSearch()
         assertFalse(vm.isSearchOpen)
@@ -124,9 +135,11 @@ class OGEventBoxSearchTest {
         vm.clearEvents()
         assertEquals("", vm.query)
 
-        vm.setFilter(OGEventBoxFilter.EVENTS)
+        vm.openSearch()
+        vm.setQuery("y")
         vm.resetSessionState()
-        assertEquals(OGEventBoxFilter.ALL, vm.filter)
+        assertEquals("", vm.query)
+        assertFalse(vm.isSearchOpen)
     }
 
     @Test

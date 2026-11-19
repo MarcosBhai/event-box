@@ -41,8 +41,8 @@
 
             <ImageView
                 android:id="@+id/og_event_box_header_icon"
-                android:layout_width="34dp"
-                android:layout_height="34dp"
+                android:layout_width="@dimen/og_event_box_header_icon_size"
+                android:layout_height="@dimen/og_event_box_header_icon_size"
                 android:background="@drawable/og_event_box_logo_background"
                 android:contentDescription="@string/og_event_box_title"
                 android:padding="6dp"
@@ -53,7 +53,7 @@
                 android:id="@+id/og_event_box_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
+                android:layout_marginStart="@dimen/og_event_box_header_title_margin"
                 android:letterSpacing="0.08"
                 android:maxLines="1"
                 android:text="@string/og_event_box_title"
@@ -65,7 +65,7 @@
                 android:id="@+id/og_event_box_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="@dimen/og_event_box_header_count_margin"
                 android:background="@drawable/og_event_box_count_background"
                 android:gravity="center"
                 android:maxLines="1"
@@ -86,105 +86,86 @@
 
             <ImageButton
                 android:id="@+id/og_event_box_search"
-                android:layout_width="32dp"
+                android:layout_width="@dimen/og_event_box_header_button_width"
                 android:layout_height="@dimen/og_event_box_header_button_height"
                 android:background="@drawable/og_event_box_button_background_tall"
                 android:contentDescription="@string/og_event_box_search"
-                android:paddingStart="6dp"
+                android:paddingStart="10dp"
                 android:paddingTop="14dp"
-                android:paddingEnd="6dp"
+                android:paddingEnd="10dp"
                 android:paddingBottom="14dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/og_event_box_ic_search"
                 android:tint="@color/og_event_box_name" />
 
+            <!-- Pause and Share live in the header so they work without opening search. -->
+            <ImageButton
+                android:id="@+id/og_event_box_pause"
+                android:layout_width="@dimen/og_event_box_header_button_width"
+                android:layout_height="@dimen/og_event_box_header_button_height"
+                android:layout_marginStart="@dimen/og_event_box_header_button_gap"
+                android:background="@drawable/og_event_box_button_background_tall"
+                android:contentDescription="@string/og_event_box_pause"
+                android:paddingStart="10dp"
+                android:paddingTop="14dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="14dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/og_event_box_ic_pause"
+                android:tint="@color/og_event_box_name" />
+
+            <ImageButton
+                android:id="@+id/og_event_box_share"
+                android:layout_width="@dimen/og_event_box_header_button_width"
+                android:layout_height="@dimen/og_event_box_header_button_height"
+                android:layout_marginStart="@dimen/og_event_box_header_button_gap"
+                android:background="@drawable/og_event_box_button_background_tall"
+                android:contentDescription="@string/og_event_box_share"
+                android:paddingStart="10dp"
+                android:paddingTop="14dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="14dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/og_event_box_ic_share"
+                android:tint="@color/og_event_box_name" />
+
             <ImageButton
                 android:id="@+id/og_event_box_pin"
-                android:layout_width="32dp"
+                android:layout_width="@dimen/og_event_box_header_button_width"
                 android:layout_height="@dimen/og_event_box_header_button_height"
+                android:layout_marginStart="@dimen/og_event_box_header_button_gap"
                 android:background="@drawable/og_event_box_button_background_tall"
                 android:contentDescription="@string/og_event_box_auto_shrink_on"
-                android:paddingStart="6dp"
+                android:paddingStart="10dp"
                 android:paddingTop="14dp"
-                android:paddingEnd="6dp"
+                android:paddingEnd="10dp"
                 android:paddingBottom="14dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/og_event_box_ic_pin" />
 
             <ImageButton
-                android:id="@+id/og_event_box_resize"
-                android:layout_width="32dp"
-                android:layout_height="@dimen/og_event_box_header_button_height"
-                android:background="@drawable/og_event_box_button_background_tall"
-                android:contentDescription="@string/og_event_box_resize"
-                android:paddingStart="6dp"
-                android:paddingTop="14dp"
-                android:paddingEnd="6dp"
-                android:paddingBottom="14dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/og_event_box_ic_resize"
-                android:tint="@color/og_event_box_name" />
-
-            <ImageButton
-                android:id="@+id/og_event_box_minimize"
-                android:layout_width="32dp"
-                android:layout_height="@dimen/og_event_box_header_button_height"
-                android:background="@drawable/og_event_box_button_background_tall"
-                android:contentDescription="@string/og_event_box_minimize"
-                android:paddingStart="6dp"
-                android:paddingTop="14dp"
-                android:paddingEnd="6dp"
-                android:paddingBottom="14dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/og_event_box_ic_minimize"
-                android:tint="@color/og_event_box_name" />
-
-            <TextView
                 android:id="@+id/og_event_box_clear"
-                android:layout_width="wrap_content"
+                android:layout_width="@dimen/og_event_box_header_button_width"
                 android:layout_height="@dimen/og_event_box_header_button_height"
+                android:layout_marginStart="@dimen/og_event_box_header_button_gap"
                 android:background="@drawable/og_event_box_button_background_tall"
-                android:gravity="center"
-                android:includeFontPadding="false"
-                android:letterSpacing="0.05"
-                android:maxLines="1"
+                android:contentDescription="@string/og_event_box_clear"
                 android:paddingStart="10dp"
+                android:paddingTop="14dp"
                 android:paddingEnd="10dp"
-                android:text="@string/og_event_box_clear"
-                android:textColor="@color/og_event_box_name"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:paddingBottom="14dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/og_event_box_ic_delete"
+                android:tint="@color/og_event_box_name" />
         </LinearLayout>
 
-        <!-- Expected events checklist (OGEventBoxLog.expect), hidden when nothing is expected. -->
-        <HorizontalScrollView
-            android:id="@+id/og_event_box_expected_scroll"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingStart="12dp"
-            android:paddingTop="6dp"
-            android:paddingEnd="12dp"
-            android:scrollbars="none"
-            android:visibility="gone"
-            tools:visibility="visible">
-
-            <TextView
-                android:id="@+id/og_event_box_expected"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:maxLines="1"
-                android:textColor="@color/og_event_box_name"
-                android:textSize="11sp"
-                tools:text="EXPECTED 1/2  ✓ login_start  ○ purchase" />
-        </HorizontalScrollView>
-
-        <!-- Search and filter bar, opened from the header's search button. -->
+        <!-- Search bar, opened from the header's search button. -->
         <LinearLayout
             android:id="@+id/og_event_box_search_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
             android:paddingStart="10dp"
             android:paddingTop="6dp"
             android:paddingEnd="10dp"
@@ -192,105 +173,36 @@
             android:visibility="gone"
             tools:visibility="visible">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+            <EditText
+                android:id="@+id/og_event_box_search_input"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:background="@drawable/og_event_box_search_background"
+                android:hint="@string/og_event_box_search_hint"
+                android:imeOptions="actionSearch|flagNoExtractUi|flagNoFullscreen"
+                android:importantForAutofill="no"
+                android:inputType="text|textNoSuggestions"
+                android:maxLines="1"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:textColor="@color/og_event_box_name"
+                android:textColorHint="@color/og_event_box_hint"
+                android:textCursorDrawable="@null"
+                android:textSize="12sp" />
 
-                <EditText
-                    android:id="@+id/og_event_box_search_input"
-                    android:layout_width="0dp"
-                    android:layout_height="40dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/og_event_box_search_background"
-                    android:hint="@string/og_event_box_search_hint"
-                    android:imeOptions="actionSearch|flagNoExtractUi|flagNoFullscreen"
-                    android:importantForAutofill="no"
-                    android:inputType="text|textNoSuggestions"
-                    android:maxLines="1"
-                    android:paddingStart="10dp"
-                    android:paddingEnd="10dp"
-                    android:textColor="@color/og_event_box_name"
-                    android:textColorHint="@color/og_event_box_hint"
-                    android:textCursorDrawable="@null"
-                    android:textSize="12sp" />
-
-                <ImageButton
-                    android:id="@+id/og_event_box_search_clear"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="4dp"
-                    android:background="@drawable/og_event_box_button_background"
-                    android:contentDescription="@string/og_event_box_search_clear"
-                    android:padding="12dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/og_event_box_ic_clear_text"
-                    android:tint="@color/og_event_box_name"
-                    android:visibility="gone" />
-
-                <ImageButton
-                    android:id="@+id/og_event_box_pause"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="4dp"
-                    android:background="@drawable/og_event_box_button_background"
-                    android:contentDescription="@string/og_event_box_pause"
-                    android:padding="11dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/og_event_box_ic_pause"
-                    android:tint="@color/og_event_box_name" />
-
-                <ImageButton
-                    android:id="@+id/og_event_box_share"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="4dp"
-                    android:background="@drawable/og_event_box_button_background"
-                    android:contentDescription="@string/og_event_box_share"
-                    android:padding="11dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/og_event_box_ic_share"
-                    android:tint="@color/og_event_box_name" />
-            </LinearLayout>
-
-            <HorizontalScrollView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:scrollbars="none">
-
-                <!-- Fixed filter chips; one chip per source tag is appended in code. -->
-                <LinearLayout
-                    android:id="@+id/og_event_box_filter_chips"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/og_event_box_filter_all"
-                        style="@style/OGEventBox.Chip"
-                        android:text="@string/og_event_box_filter_all" />
-
-                    <TextView
-                        android:id="@+id/og_event_box_filter_warnings"
-                        style="@style/OGEventBox.Chip"
-                        android:layout_marginStart="6dp"
-                        android:text="@string/og_event_box_filter_warnings" />
-
-                    <TextView
-                        android:id="@+id/og_event_box_filter_events"
-                        style="@style/OGEventBox.Chip"
-                        android:layout_marginStart="6dp"
-                        android:text="@string/og_event_box_filter_events" />
-
-                    <TextView
-                        android:id="@+id/og_event_box_filter_user_props"
-                        style="@style/OGEventBox.Chip"
-                        android:layout_marginStart="6dp"
-                        android:text="@string/og_event_box_filter_user_props" />
-                </LinearLayout>
-            </HorizontalScrollView>
+            <ImageButton
+                android:id="@+id/og_event_box_search_clear"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:background="@drawable/og_event_box_button_background"
+                android:contentDescription="@string/og_event_box_search_clear"
+                android:padding="12dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/og_event_box_ic_clear_text"
+                android:tint="@color/og_event_box_name"
+                android:visibility="gone" />
         </LinearLayout>
 
         <FrameLayout
@@ -302,6 +214,25 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical">
+
+                <!-- One-time gesture tip, shown the first time the panel opens. Tap to dismiss. -->
+                <TextView
+                    android:id="@+id/og_event_box_tip"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginEnd="12dp"
+                    android:background="@drawable/og_event_box_count_background"
+                    android:paddingStart="12dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="6dp"
+                    android:textColor="@color/og_event_box_name"
+                    android:textSize="11sp"
+                    android:visibility="gone"
+                    tools:text="Tip: tap the logo to shrink · long-press it to change transparency · drag the bar at the bottom to resize"
+                    tools:visibility="visible" />
 
                 <!-- Shown once the log is full and the oldest entries were dropped. -->
                 <TextView
@@ -327,7 +258,7 @@
                     android:paddingStart="12dp"
                     android:paddingTop="6dp"
                     android:paddingEnd="12dp"
-                    android:paddingBottom="6dp"
+                    android:paddingBottom="30dp"
                     android:scrollbarThumbVertical="@color/og_event_box_index"
                     android:scrollbars="vertical" />
             </LinearLayout>
@@ -341,6 +272,26 @@
                 android:textColor="@color/og_event_box_index"
                 android:textSize="13sp"
                 tools:visibility="gone" />
+
+            <!-- "Cleared 42 events · UNDO" for a few seconds after Clear. -->
+            <TextView
+                android:id="@+id/og_event_box_undo"
+                android:layout_width="wrap_content"
+                android:layout_height="28dp"
+                android:layout_gravity="bottom|start"
+                android:layout_marginStart="20dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/og_event_box_pill_background"
+                android:elevation="2dp"
+                android:gravity="center"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textColor="@color/og_event_box_on_accent"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:text="Cleared 42 events · UNDO"
+                tools:visibility="visible" />
 
             <!-- "↓ 3 new" when scrolled up, "▶ Resume (+3)" while paused. -->
             <TextView
@@ -368,12 +319,13 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/og_event_box_resize_handle_height"
             android:clickable="true"
+            android:contentDescription="@string/og_event_box_resize_handle"
             android:focusable="true">
 
             <View
                 android:id="@+id/og_event_box_resize_handle_bar"
-                android:layout_width="36dp"
-                android:layout_height="4dp"
+                android:layout_width="45dp"
+                android:layout_height="5dp"
                 android:layout_gravity="center"
                 android:background="@drawable/og_event_box_resize_handle_background" />
         </FrameLayout>

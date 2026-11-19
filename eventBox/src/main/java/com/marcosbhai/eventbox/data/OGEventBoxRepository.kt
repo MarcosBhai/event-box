@@ -30,10 +30,6 @@ internal object OGEventBoxRepository {
     val isActive: Boolean get() = _isActive.value
     val isActiveFlow: StateFlow<Boolean> = _isActive.asStateFlow()
 
-    /** Event names the tester expects to see fired, in the order given. */
-    private val _expectedEvents = MutableStateFlow<List<String>>(emptyList())
-    val expectedEvents: StateFlow<List<String>> = _expectedEvents.asStateFlow()
-
     @Volatile
     var debugModeEnabled = false
 
@@ -232,18 +228,54 @@ internal object OGEventBoxRepository {
         }
     }
 
-    fun setExpectedEvents(names: List<String>) {
-        _expectedEvents.value = names.map { it.trim() }.filter { it.isNotEmpty() }.distinct()
-    }
-
     fun clear() {
         synchronized(lock) {
-            nextIndex = 1
-            droppedCount = 0
-            lastAppendAt = 0L
-            _events.value = emptyList()
+            clearEntries()
             com.marcosbhai.eventbox.validator.OGEventBoxValidator.reset()
         }
+    }
+
+    /** What [clearUndoable] removed, so [restore] can bring it back. */
+    class ClearedLog internal constructor(
+        val events: List<OGEventBoxDebugEvent>,
+        internal val nextIndex: Int,
+        internal val droppedCount: Int,
+    )
+
+    /**
+     * Empties the log but keeps what was there, for an undo. The Firebase-limit validator is only
+     * reset by [commitClear], once the undo is no longer offered, so undoing loses nothing.
+     */
+    fun clearUndoable(): ClearedLog = synchronized(lock) {
+        ClearedLog(_events.value, nextIndex, droppedCount).also { clearEntries() }
+    }
+
+    /** Makes a [clearUndoable] final. */
+    fun commitClear() {
+        com.marcosbhai.eventbox.validator.OGEventBoxValidator.reset()
+    }
+
+    /**
+     * Undoes [clearUndoable]. Entries logged since the clear are kept after the restored ones and
+     * renumbered to follow them, so the numbering stays continuous.
+     */
+    fun restore(cleared: ClearedLog) {
+        synchronized(lock) {
+            var index = cleared.nextIndex
+            val since = _events.value.map { it.copy(index = index++) }
+            val merged = cleared.events + since
+            val overflow = merged.size - maxEvents
+            nextIndex = index
+            droppedCount = cleared.droppedCount + droppedCount + overflow.coerceAtLeast(0)
+            _events.value = if (overflow > 0) merged.drop(overflow) else merged
+        }
+    }
+
+    private fun clearEntries() {
+        nextIndex = 1
+        droppedCount = 0
+        lastAppendAt = 0L
+        _events.value = emptyList()
     }
 
     fun disable() {

@@ -7,7 +7,7 @@ This product includes third-party material:
 
 1. Icons
    The vector icons in eventBox/src/main/res/drawable (og_event_box_ic_bolt, _close,
-   _minimize, _pin, _unpin, _resize, _warning) are based on Material Icons
+   _delete, _pin, _unpin, _warning) are based on Material Icons
    (https://fonts.google.com/icons), Copyright Google LLC, licensed under the
    Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
 

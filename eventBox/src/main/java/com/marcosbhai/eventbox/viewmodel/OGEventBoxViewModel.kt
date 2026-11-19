@@ -4,7 +4,6 @@ import android.content.Context
 import com.marcosbhai.eventbox.data.OGEventBoxRepository
 import com.marcosbhai.eventbox.filter.OGEventBoxQuery
 import com.marcosbhai.eventbox.model.OGEventBoxDebugEvent
-import com.marcosbhai.eventbox.model.OGEventBoxFilter
 import com.marcosbhai.eventbox.model.OGEventBoxPosition
 import com.marcosbhai.eventbox.model.OGEventBoxUiState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,22 +31,15 @@ internal class OGEventBoxViewModel(private val repository: OGEventBoxRepository 
     /** Text typed into the search bar. Kept here so it survives the view being re-created. */
     val query: String get() = _query
 
-    private var _filter: OGEventBoxFilter = OGEventBoxFilter.ALL
-    val filter: OGEventBoxFilter get() = _filter
-
     private var _isSearchOpen: Boolean = false
     val isSearchOpen: Boolean get() = _isSearchOpen
-
-    private var _sourceFilter: String? = null
-    /** When set, only entries logged with this source tag are shown. */
-    val sourceFilter: String? get() = _sourceFilter
 
     private var pausedSnapshot: List<OGEventBoxDebugEvent>? = null
     /** True while the list is frozen; the repository keeps recording underneath. */
     val isPaused: Boolean get() = pausedSnapshot != null
 
-    /** True when the query or filter is hiding some entries. */
-    val isFiltering: Boolean get() = _query.isNotBlank() || _filter != OGEventBoxFilter.ALL || _sourceFilter != null
+    /** True when the search query is hiding some entries. */
+    val isFiltering: Boolean get() = _query.isNotBlank()
 
     private val _uiState = MutableStateFlow(OGEventBoxUiState())
     val uiState: StateFlow<OGEventBoxUiState> = _uiState.asStateFlow()
@@ -56,21 +48,9 @@ internal class OGEventBoxViewModel(private val repository: OGEventBoxRepository 
     val isActive: Boolean get() = repository.isActive
     val isActiveFlow: StateFlow<Boolean> get() = repository.isActiveFlow
 
-    /** Names passed to `OGEventBoxLog.expect`, for the checklist strip. */
-    val expectedEvents: StateFlow<List<String>> get() = repository.expectedEvents
-
     /** Entries dropped from the top of the log because it was full. */
     val droppedCount: Int get() = repository.droppedCount
     val maxEvents: Int get() = repository.maxEvents
-
-    /** Times each expected name has fired in [events] (repeats included), in [expectedEvents] order. */
-    fun expectedCounts(events: List<OGEventBoxDebugEvent>): List<Pair<String, Int>> {
-        val expected = repository.expectedEvents.value
-        if (expected.isEmpty()) return emptyList()
-        val counts = HashMap<String, Int>()
-        for (event in events) counts[event.name] = (counts[event.name] ?: 0) + event.repeatCount
-        return expected.map { it to (counts[it] ?: 0) }
-    }
 
     fun resetSessionState() {
         anchorX = Float.NaN
@@ -80,6 +60,7 @@ internal class OGEventBoxViewModel(private val repository: OGEventBoxRepository 
         lastSeenIndex = 0
         customPanelHeight = null
         resetSearch()
+        pausedSnapshot = null
         updateUiState()
     }
 
@@ -107,18 +88,32 @@ internal class OGEventBoxViewModel(private val repository: OGEventBoxRepository 
         repository.clear()
         lastSeenIndex = 0
         resetSearch()
+        // A paused list would keep showing the cleared entries, so clearing also resumes.
+        pausedSnapshot = null
         updateUiState()
     }
+
+    /** Clears the log and returns what was removed, for [undoClear]. Call [commitClear] once the undo expires. */
+    fun clearEventsUndoable(): OGEventBoxRepository.ClearedLog {
+        val cleared = repository.clearUndoable()
+        lastSeenIndex = 0
+        resetSearch()
+        pausedSnapshot = null
+        updateUiState()
+        return cleared
+    }
+
+    fun undoClear(cleared: OGEventBoxRepository.ClearedLog) {
+        repository.restore(cleared)
+        lastSeenIndex = repository.events.value.lastOrNull()?.index ?: 0
+        updateUiState()
+    }
+
+    fun commitClear() = repository.commitClear()
 
     fun setQuery(text: String) {
         if (_query == text) return
         _query = text
-        updateUiState()
-    }
-
-    fun setFilter(filter: OGEventBoxFilter) {
-        if (_filter == filter) return
-        _filter = filter
         updateUiState()
     }
 
@@ -128,17 +123,10 @@ internal class OGEventBoxViewModel(private val repository: OGEventBoxRepository 
         updateUiState()
     }
 
-    /** Closes the search bar and drops the query and filter, so nothing stays hidden unseen. */
+    /** Closes the search bar and drops the query, so nothing stays hidden unseen. */
     fun closeSearch() {
         if (!_isSearchOpen && !isFiltering) return
         resetSearch()
-        updateUiState()
-    }
-
-    /** Selects a source chip, or shows every source when [source] is null. */
-    fun setSourceFilter(source: String?) {
-        if (_sourceFilter == source) return
-        _sourceFilter = source
         updateUiState()
     }
 
@@ -169,16 +157,12 @@ internal class OGEventBoxViewModel(private val repository: OGEventBoxRepository 
         }
     }
 
-    /** Every source tag present in [events], in first-seen order (for the source chips). */
-    fun sources(events: List<OGEventBoxDebugEvent>): List<String> =
-        events.mapNotNullTo(LinkedHashSet()) { it.source }.toList()
-
     /**
-     * What the list shows: the paused snapshot (or the live [events]) narrowed by the current
-     * query, filter and source. The unread badge never uses this.
+     * What the list shows: the paused snapshot (or the live [events]) narrowed by the search
+     * query. The unread badge never uses this.
      */
     fun visibleEvents(events: List<OGEventBoxDebugEvent>): List<OGEventBoxDebugEvent> =
-        OGEventBoxQuery.apply(pausedSnapshot ?: events, _query, _filter, _sourceFilter)
+        OGEventBoxQuery.apply(pausedSnapshot ?: events, _query)
 
     fun closeTargetDropped() {
         repository.disable()
@@ -197,13 +181,10 @@ internal class OGEventBoxViewModel(private val repository: OGEventBoxRepository 
         return eventsList.count { it.index > lastSeenIndex }
     }
 
+    /** Pause lives in the header, so closing search leaves it alone. */
     private fun resetSearch() {
         _query = ""
-        _filter = OGEventBoxFilter.ALL
-        _sourceFilter = null
         _isSearchOpen = false
-        // Closing the tools bar also resumes, so the list never stays frozen out of sight.
-        pausedSnapshot = null
     }
 
     private fun updateUiState() {
@@ -216,10 +197,8 @@ internal class OGEventBoxViewModel(private val repository: OGEventBoxRepository 
             unreadCount = getUnreadCount(currentEvents),
             remainingMinutes = repository.getContext()?.let { repository.remainingMinutes(it) } ?: 0,
             query = _query,
-            filter = _filter,
             visibleEvents = visibleEvents(currentEvents),
             isSearchOpen = _isSearchOpen,
-            sourceFilter = _sourceFilter,
             isPaused = isPaused,
         )
     }

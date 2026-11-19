@@ -78,24 +78,14 @@ public class OGEventBoxJavaInteropTest {
     }
 
     @Test
-    public void testJavaFilterEnum() {
-        com.marcosbhai.eventbox.model.OGEventBoxFilter filter =
-                com.marcosbhai.eventbox.model.OGEventBoxFilter.valueOf("WARNINGS");
-        assertEquals(com.marcosbhai.eventbox.model.OGEventBoxFilter.WARNINGS, filter);
-        assertEquals(4, com.marcosbhai.eventbox.model.OGEventBoxFilter.values().length);
-    }
-
-    @Test
     public void testJavaResultsAndVerificationApi() {
         OGEventBoxLog.setMaxEvents(300)
             .setDetectDuplicates(false)
-            .setDuplicateWindowMs(250L)
-            .expect("login_start", "purchase");
+            .setDuplicateWindowMs(250L);
 
         assertEquals(300, OGEventBoxLog.getMaxEvents());
         assertFalse(OGEventBoxLog.getDetectDuplicates());
         assertEquals(250L, OGEventBoxLog.getDuplicateWindowMs());
-        assertEquals(2, OGEventBoxLog.getExpectedEvents().size());
         assertEquals(0, OGEventBoxLog.getDroppedEventCount());
 
         // Java callers can use the 3-arg overloads and the old constructor shapes.
@@ -107,8 +97,7 @@ public class OGEventBoxJavaInteropTest {
         assertNull(event.getSource());
 
         // Reset
-        OGEventBoxLog.clearExpectations()
-            .setMaxEvents(OGEventBoxLog.MAX_EVENTS)
+        OGEventBoxLog.setMaxEvents(OGEventBoxLog.MAX_EVENTS)
             .setDetectDuplicates(true)
             .setDuplicateWindowMs(500L);
     }

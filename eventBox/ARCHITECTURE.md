@@ -49,7 +49,8 @@ eventBox/
         OGEventBoxUiState.kt    presentation state for MVVM
       data/
         OGEventBoxRepository.kt in-memory events, session state, expiry timer
-        OGEventBoxStore.kt      SharedPreferences persistence (expiry, bubble position)
+        OGEventBoxStore.kt      SharedPreferences persistence (expiry, bubble position,
+                                panel height and opacity, one-time hint flags)
       validator/
         OGEventBoxValidator.kt  PUBLIC: Firebase limit checks -> warning strings
       viewmodel/
@@ -63,7 +64,7 @@ eventBox/
                 og_event_box_close.xml  drop-to-close target
       drawable/ og_event_box_*.xml      shapes and vector icons
       values/   colors.xml  dimens.xml  strings.xml   (all prefixed og_event_box_)
-  src/test/     OGEventBoxTest.kt, OGEventBoxJavaInteropTest.java (JVM unit tests)
+  src/test/     OGEventBox*Test.kt, OGEventBoxJavaInteropTest.java (JVM unit tests)
 ```
 
 Everything is `internal` except `OGEventBoxLog`, `OGEventBoxDebugEvent` and `OGEventBoxValidator`.
@@ -138,7 +139,8 @@ Activity changes: `isCollapsed`, `isPinned`, `anchorX/anchorY`, `lastSeenIndex` 
    (`animateBubbleEntryWhenSettled` -> `showBubbleAfterMove`), then fades in; on the left it
    enters immediately.
 4. **Header mirroring.** `applyHeaderOrientation` re-adds header children in mirrored order when
-   the bubble is on the right, so the logo always sits next to the bubble.
+   the bubble is on the right, so the logo always sits next to the bubble. Every size comes from
+   the `og_event_box_header_*` dimens, which the layout uses too, so the two cannot drift apart.
 5. **Snapping.** `snapPosition` = `clampPosition` (inside system-bar insets); for the collapsed
    bubble x is forced to the nearer rail. Settling uses a `ValueAnimator` (`animateTo`) because
    a window cannot be moved by a view animator.
@@ -147,8 +149,10 @@ Activity changes: `isCollapsed`, `isPinned`, `anchorX/anchorY`, `lastSeenIndex` 
 7. **Resize.** `ResizeTouchListener` changes `contentContainer`'s height between
    `og_event_box_min_list_height` and 85% of the screen (also bounded by space below the panel).
    While dragging in either direction the handle bar scales up and takes the accent colour
-   (`setHandleHighlighted`). The header resize icon blinks the bar twice. Disabled entirely by
-   `setPanelResizingEnabled(false)`; the height is stored in `viewModel.customPanelHeight`.
+   (`setHandleHighlighted`). A drag starts only past the touch slop; a double-tap animates back to
+   `og_event_box_list_height`. Until the first drag the bar pulses each time the panel opens.
+   The height lives in `viewModel.customPanelHeight` and is saved (in dp) by `OGEventBoxStore`.
+   Disabled entirely by `setPanelResizingEnabled(false)`.
 8. **Warnings.** Rows with warnings show a ⚠ icon; tapping expands the details with
    `TransitionManager`, one open row at a time (`expandedEventIndex`).
 9. **Close target.** Separate `FLAG_NOT_TOUCHABLE` window revealed while a drag is near the
@@ -157,6 +161,13 @@ Activity changes: `isCollapsed`, `isPinned`, `anchorX/anchorY`, `lastSeenIndex` 
 10. **Styling.** `styleBubble()` / `applyLogoTo()` read the `OGEventBoxLog.bubble*` options.
 11. **Coroutines.** On attach a `CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)`
     collects the event flow; cancelled on detach.
+12. **Clear with undo.** Clear calls `OGEventBoxRepository.clearUndoable()`, which keeps the removed
+    entries, and shows an undo pill for 4 s. Undo calls `restore()`: entries logged in the meantime
+    are kept and renumbered after the restored ones. The Firebase validator is reset only by
+    `commitClear()`, when the offer ends (timeout, a second Clear, collapse or detach).
+13. **Search.** `OGEventBoxQuery` is the only filter: text terms, `key:value`, `!` and the
+    `is:warning` / `is:user_property` / `is:event` / `is:repeated` keywords. Pause and Share sit
+    in the header; pausing is independent of the search bar, and Clear resumes.
 
 Constants live in the companion object (auto-shrink 6 s, highlight 2.5 s, idle alpha 0.55,
 animation durations, close-target radii).

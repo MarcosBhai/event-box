@@ -50,7 +50,3 @@
 -keep public interface com.marcosbhai.eventbox.OGEventBoxAnalytics$UserPropertySink {
     *;
 }
-
--keep public enum com.marcosbhai.eventbox.model.OGEventBoxFilter {
-    *;
-}

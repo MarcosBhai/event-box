@@ -12,7 +12,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/** v1.2–v1.4 logic: duplicates, log size, pause, sources, format helpers and expected events. */
+/** v1.2–v1.4 logic: duplicates, log size, pause, sources and format helpers. */
 class OGEventBoxResultsTest {
 
     @Before
@@ -22,14 +22,12 @@ class OGEventBoxResultsTest {
         OGEventBoxRepository.detectDuplicates = true
         OGEventBoxRepository.duplicateWindowMs = 60_000L
         OGEventBoxRepository.maxEvents = OGEventBoxRepository.MAX_EVENTS
-        OGEventBoxRepository.setExpectedEvents(emptyList())
         OGEventBoxRepository.clear()
     }
 
     @After
     fun tearDown() {
         OGEventBoxRepository.clear()
-        OGEventBoxRepository.setExpectedEvents(emptyList())
         OGEventBoxRepository.maxEvents = OGEventBoxRepository.MAX_EVENTS
         OGEventBoxRepository.duplicateWindowMs = OGEventBoxRepository.DEFAULT_DUPLICATE_WINDOW_MS
         OGEventBoxRepository.firebaseChecksEnabled = true
@@ -100,33 +98,35 @@ class OGEventBoxResultsTest {
     }
 
     @Test
-    fun sourceTagsFilterAndListInOrder() {
+    fun closingSearchKeepsPauseButClearingResumes() {
+        val vm = OGEventBoxViewModel()
+        OGEventBoxRepository.log("a", null as Map<String, Any?>?)
+        vm.openSearch()
+        vm.pause()
+        vm.closeSearch()
+        assertTrue(vm.isPaused) // Pause is a header button now, independent of the search bar.
+
+        vm.clearEventsUndoable()
+        assertFalse(vm.isPaused) // Otherwise the frozen list would still show the cleared entries.
+        assertTrue(vm.visibleEvents(events).isEmpty())
+
+        vm.pause()
+        vm.clearEvents()
+        assertFalse(vm.isPaused)
+    }
+
+    @Test
+    fun sourceTagsAreSearchable() {
         OGEventBoxRepository.log("a", null as Map<String, Any?>?, source = "firebase")
         OGEventBoxRepository.log("b", null as Map<String, Any?>?, source = "mixpanel")
         OGEventBoxRepository.log("c", null as Map<String, Any?>?, source = "firebase")
         OGEventBoxRepository.log("d", null as Map<String, Any?>?)
         val vm = OGEventBoxViewModel()
-        assertEquals(listOf("firebase", "mixpanel"), vm.sources(events))
-        vm.setSourceFilter("firebase")
+        vm.setQuery("firebase")
         assertEquals(listOf("a", "c"), vm.visibleEvents(events).map { it.name })
-        assertTrue(OGEventBoxQuery.matches(events[1], "mixpanel", com.marcosbhai.eventbox.model.OGEventBoxFilter.ALL))
-    }
-
-    @Test
-    fun expectedEventsChecklist() {
-        OGEventBoxLog.expect("login_start", "login_success", "login_start", " ")
-        assertEquals(listOf("login_start", "login_success"), OGEventBoxLog.expectedEvents)
-
-        OGEventBoxRepository.log("login_start")
-        OGEventBoxRepository.log("login_start")
-        assertEquals(listOf("login_success"), OGEventBoxLog.missingExpectedEvents())
-        assertEquals(
-            listOf("login_start" to 2, "login_success" to 0),
-            OGEventBoxViewModel().expectedCounts(events),
-        )
-
-        OGEventBoxLog.clearExpectations()
-        assertTrue(OGEventBoxLog.expectedEvents.isEmpty())
+        assertTrue(OGEventBoxQuery.matches(events[1], "mixpanel"))
+        vm.setQuery("!mixpanel")
+        assertEquals(listOf("a", "c", "d"), vm.visibleEvents(events).map { it.name })
     }
 
     @Test

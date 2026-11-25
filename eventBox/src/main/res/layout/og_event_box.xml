@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
     The floating OGEventBox overlay (testing only, see OGEventBoxLog).
     Inflated into OGEventBoxView, which is placed in its own TYPE_APPLICATION window.
 
@@ -50,18 +49,6 @@
                 android:tint="@color/og_event_box_on_accent" />
 
             <TextView
-                android:id="@+id/og_event_box_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/og_event_box_header_title_margin"
-                android:letterSpacing="0.08"
-                android:maxLines="1"
-                android:text="@string/og_event_box_title"
-                android:textColor="@color/og_event_box_name"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <TextView
                 android:id="@+id/og_event_box_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -84,10 +71,26 @@
                 android:layout_height="1dp"
                 android:layout_weight="1" />
 
+            <!-- Shows or hides the "+1.2s" time since the previous entry on every row. -->
+            <ImageButton
+                android:id="@+id/og_event_box_delta"
+                android:layout_width="@dimen/og_event_box_header_button_width"
+                android:layout_height="@dimen/og_event_box_header_button_height"
+                android:background="@drawable/og_event_box_button_background_tall"
+                android:contentDescription="@string/og_event_box_delta_hide"
+                android:paddingStart="10dp"
+                android:paddingTop="14dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="14dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/og_event_box_ic_timer"
+                android:tint="@color/og_event_box_accent" />
+
             <ImageButton
                 android:id="@+id/og_event_box_search"
                 android:layout_width="@dimen/og_event_box_header_button_width"
                 android:layout_height="@dimen/og_event_box_header_button_height"
+                android:layout_marginStart="@dimen/og_event_box_header_button_gap"
                 android:background="@drawable/og_event_box_button_background_tall"
                 android:contentDescription="@string/og_event_box_search"
                 android:paddingStart="10dp"
@@ -260,7 +263,8 @@
                     android:paddingEnd="12dp"
                     android:paddingBottom="30dp"
                     android:scrollbarThumbVertical="@color/og_event_box_index"
-                    android:scrollbars="vertical" />
+                    android:scrollbars="vertical"
+                    tools:listitem="@layout/og_event_box_item" />
             </LinearLayout>
 
             <TextView

@@ -22,6 +22,7 @@ internal object OGEventBoxStore {
     // Panel preferences the tester picked. Also kept across sessions.
     private const val KEY_PANEL_HEIGHT_DP = "og_event_box_panel_height_dp"
     private const val KEY_PANEL_ALPHA = "og_event_box_panel_alpha"
+    private const val KEY_SHOW_DELTA = "og_event_box_show_delta"
 
     private fun prefs(context: Context) =
         context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -93,6 +94,15 @@ internal object OGEventBoxStore {
 
     fun setPanelAlpha(context: Context, alpha: Float) {
         runCatching { prefs(context).edit { putFloat(KEY_PANEL_ALPHA, alpha) } }
+    }
+
+    /** Whether rows show the "+1.2s" time since the previous entry (the header switch). */
+    fun isDeltaShown(context: Context): Boolean = runCatching {
+        prefs(context).getBoolean(KEY_SHOW_DELTA, true)
+    }.getOrDefault(true)
+
+    fun setDeltaShown(context: Context, shown: Boolean) {
+        runCatching { prefs(context).edit { putBoolean(KEY_SHOW_DELTA, shown) } }
     }
 
     /**

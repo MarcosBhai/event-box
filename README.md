@@ -18,9 +18,9 @@ Think of it as **Firebase DebugView on the device itself**: no adb, no USB cable
 - No permissions needed (the background overlay is optional and opt-in).
 - `minSdk 21`, pure Kotlin, works from Java too.
 
-> **New in 1.0.6:** a simpler header, undo for Clear, `is:warning` search, double-tap to reset
-> the panel height, and remembered panel settings. Two APIs were removed; see the
-> [changelog](CHANGELOG.md) before you upgrade.
+> **New in 1.0.7:** a clock button in the header shows or hides the `+1.2s` time since the
+> previous event, and the header drops the `EVENTS` title to make room. See the
+> [changelog](CHANGELOG.md).
 
 ## Why use Event Box?
 
@@ -91,7 +91,7 @@ dependencyResolutionManagement {
 
 ```kotlin
 dependencies {
-    implementation("com.github.MarcosBhai:event-box:1.0.6")
+    implementation("com.github.MarcosBhai:event-box:1.0.7")
 }
 ```
 
@@ -120,7 +120,7 @@ maven {
 }
 
 // app/build.gradle.kts
-implementation("com.marcosbhai:event-box:1.0.6")
+implementation("com.marcosbhai:event-box:1.0.7")
 ```
 
 </details>
@@ -131,8 +131,8 @@ Bump the fallback `version` in `eventBox/build.gradle.kts`, the install snippets
 [`CHANGELOG.md`](CHANGELOG.md), then push a version tag:
 
 ```bash
-git tag 1.0.6
-git push origin 1.0.6
+git tag 1.0.7
+git push origin 1.0.7
 ```
 
 - **JitPack** builds the tag the first time someone requests it (or open
@@ -297,7 +297,7 @@ OGEventBoxLog.setPanelResizingEnabled(false);
 
 - **Bubble**: tap to open the panel, drag to move it. It snaps to the left or right edge and fades
   when idle. The badge shows how many events arrived since you last opened the panel.
-- **Panel**: shows `number  time  event_name`, newest at the bottom. It shrinks back to the bubble
+- **Panel**: shows `number  time  +delta  event_name`, newest at the bottom. It shrinks back to the bubble
   after 6 seconds without touch (it waits while the one-time tip or the undo pill is showing).
     - **Logo**: tap to shrink it back to the bubble now; long-press to cycle the panel's
       transparency (100% → 85% → 70% → 60%). The first time the panel opens, a one-time tip
@@ -306,6 +306,8 @@ OGEventBoxLog.setPanelResizingEnabled(false);
       default height. While you drag, its bar widens and lights up. Until you have resized once,
       it briefly lights up each time the panel opens.
     - **Warning icon**: tap to smoothly expand/collapse Firebase limit warnings.
+    - **Clock**: show or hide the `+1.2s` time since the previous event on every row (green
+      while shown). The choice is remembered on the device.
     - **Pin**: stops it from auto-shrinking.
     - **Clear** (trash icon): empties the log. A `Cleared N events · UNDO` pill stays for 4
       seconds; tap it to bring the entries back (events logged in the meantime are kept too).
@@ -322,8 +324,8 @@ OGEventBoxLog.setPanelResizingEnabled(false);
 - **Close**: drag the box toward the bottom of the screen and drop it on the close target to end
   the session.
 
-The header reads `[Logo] [Count] … [Search] [Pause] [Share] [Pin] [Clear]`, mirrored when the
-bubble is on the right edge. On narrow phones the `EVENTS` title hides itself to make room.
+The header reads `[Logo] [Count] … [Clock] [Search] [Pause] [Share] [Pin] [Clear]`, mirrored when
+the bubble is on the right edge.
 
 The panel height and transparency you pick are remembered on the device, across app restarts and
 debug-mode sessions. A transparency picked by long-press overrides `setPanelAlpha(...)`.

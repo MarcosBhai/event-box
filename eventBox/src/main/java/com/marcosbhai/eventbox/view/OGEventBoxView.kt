@@ -81,11 +81,11 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
     private val panel: LinearLayout
     private val header: LinearLayout
     private val headerIcon: ImageView
-    private val titleView: TextView
     private val countView: TextView
     private val headerSpacer: View
     private val clearButton: ImageButton
     private val pinButton: ImageButton
+    private val deltaButton: ImageButton
     private val recycler: RecyclerView
     private val layoutManager: LinearLayoutManager
     private val adapter: OGEventBoxAdapter
@@ -117,7 +117,6 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
     private val headerButtonWidth = resources.getDimensionPixelSize(R.dimen.og_event_box_header_button_width)
     private val headerButtonGap = resources.getDimensionPixelSize(R.dimen.og_event_box_header_button_gap)
     private val headerIconSize = resources.getDimensionPixelSize(R.dimen.og_event_box_header_icon_size)
-    private val headerTitleMargin = resources.getDimensionPixelSize(R.dimen.og_event_box_header_title_margin)
     private val headerCountMargin = resources.getDimensionPixelSize(R.dimen.og_event_box_header_count_margin)
     private val pivotInset = resources.getDimensionPixelSize(R.dimen.og_event_box_panel_pivot_inset)
     private val defaultListHeight = resources.getDimensionPixelSize(R.dimen.og_event_box_list_height)
@@ -141,8 +140,8 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
     private var isHandleHighlighted = false
     private var isHeaderMirrored: Boolean? = null
 
-    /** Declared before init: init builds the header, and a later initializer would reset this. */
-    private var headerFitWatched = false
+    /** True while rows show the "+1.2s" time since the previous entry. Remembered across sessions. */
+    private var showDelta = OGEventBoxStore.isDeltaShown(context)
     private var expandedEventIndex: Int? = null
 
     /** True while the box window has dropped FLAG_NOT_FOCUSABLE so the search field can type. */
@@ -193,11 +192,11 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         panel = findViewById(R.id.og_event_box_panel)
         header = findViewById(R.id.og_event_box_header)
         headerIcon = findViewById(R.id.og_event_box_header_icon)
-        titleView = findViewById(R.id.og_event_box_title)
         countView = findViewById(R.id.og_event_box_count)
         headerSpacer = findViewById(R.id.og_event_box_spacer)
         clearButton = findViewById(R.id.og_event_box_clear)
         pinButton = findViewById(R.id.og_event_box_pin)
+        deltaButton = findViewById(R.id.og_event_box_delta)
         recycler = findViewById(R.id.og_event_box_list)
         contentContainer = findViewById(R.id.og_event_box_content_container)
         resizeHandle = findViewById(R.id.og_event_box_resize_handle)
@@ -261,6 +260,7 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         shareButton = findViewById(R.id.og_event_box_share)
 
         clearButton.setOnClickListener { clearWithUndo() }
+        setUpDeltaButton()
         setUpSearch()
         resizeHandle.setOnTouchListener(ResizeTouchListener())
         // TalkBack users cannot drag the handle, so expose the reset as its click action.
@@ -315,6 +315,36 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
         // The opacity the tester picked last time wins over the app's default.
         OGEventBoxStore.panelAlpha(context)?.let { OGEventBoxRepository.panelAlpha = it }
         applyPanelAlpha()
+    }
+
+    // =========================================================================
+    // Delta-time toggle (clock button)
+    // =========================================================================
+
+    private fun setUpDeltaButton() {
+        deltaButton.setOnClickListener {
+            showDelta = !showDelta
+            OGEventBoxStore.setDeltaShown(context, showDelta)
+            updateDeltaButton()
+            renderEvents(viewModel.events.value)
+            runCatching {
+                Toast.makeText(
+                    context.applicationContext,
+                    if (showDelta) R.string.og_event_box_delta_shown_toast else R.string.og_event_box_delta_hidden_toast,
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
+            scheduleAutoShrink()
+        }
+        updateDeltaButton()
+    }
+
+    /** Green while the "+1.2s" times are shown, plain white while they are hidden. */
+    private fun updateDeltaButton() {
+        deltaButton.setColorFilter(if (showDelta) pinnedTint else iconTint)
+        deltaButton.contentDescription = context.getString(
+            if (showDelta) R.string.og_event_box_delta_hide else R.string.og_event_box_delta_show
+        )
     }
 
     // =========================================================================
@@ -761,6 +791,7 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
             OGEventBoxRow(
                 event = event,
                 deltaMs = previousTime[event.index]?.let { event.timestampMillis - it },
+                showDelta = showDelta,
                 isLatest = event.index == latestIndex,
                 isLastRow = position == visible.lastIndex,
                 isExpanded = event.index == expandedEventIndex,
@@ -927,60 +958,28 @@ internal class OGEventBoxView(context: Context, private val viewModel: OGEventBo
 
         if (isRightSide) {
             // Mirrored for a right-side bubble:
-            // [Clear] [Pin] [Share] [Pause] [Search] ---Spacer--- [Title] [Count] [Logo]
+            // [Clear] [Pin] [Share] [Pause] [Search] [Delta] ---Spacer--- [Count] [Logo]
             header.addView(clearButton, button(0))
             header.addView(pinButton, button(headerButtonGap))
             header.addView(shareButton, button(headerButtonGap))
             header.addView(pauseButton, button(headerButtonGap))
             header.addView(searchButton, button(headerButtonGap))
+            header.addView(deltaButton, button(headerButtonGap))
             header.addView(headerSpacer, spacer)
-            header.addView(titleView, lp(wrap, wrap))
-            header.addView(countView, lp(wrap, wrap, headerCountMargin))
-            header.addView(headerIcon, lp(headerIconSize, headerIconSize, headerTitleMargin))
+            header.addView(countView, lp(wrap, wrap))
+            header.addView(headerIcon, lp(headerIconSize, headerIconSize, headerCountMargin))
         } else {
-            // [Logo] [Title] [Count] ---Spacer--- [Search] [Pause] [Share] [Pin] [Clear]
+            // [Logo] [Count] ---Spacer--- [Delta] [Search] [Pause] [Share] [Pin] [Clear]
             header.addView(headerIcon, lp(headerIconSize, headerIconSize))
-            header.addView(titleView, lp(wrap, wrap, headerTitleMargin))
             header.addView(countView, lp(wrap, wrap, headerCountMargin))
             header.addView(headerSpacer, spacer)
-            header.addView(searchButton, button(0))
+            header.addView(deltaButton, button(0))
+            header.addView(searchButton, button(headerButtonGap))
             header.addView(pauseButton, button(headerButtonGap))
             header.addView(shareButton, button(headerButtonGap))
             header.addView(pinButton, button(headerButtonGap))
             header.addView(clearButton, button(headerButtonGap))
         }
-
-        if (!headerFitWatched) {
-            headerFitWatched = true
-            header.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> fitHeaderTitle() }
-        }
-    }
-
-    /**
-     * Narrow phones can't fit every header button next to the "EVENTS" title, so the title is
-     * dropped when the row overflows and brought back once there is room. The count stays.
-     */
-    private fun fitHeaderTitle() {
-        val available = header.width - header.paddingLeft - header.paddingRight
-        if (available <= 0) return
-        val titleLp = titleView.layoutParams as? LinearLayout.LayoutParams ?: return
-        val titleNeed = titleView.paint.measureText(titleView.text.toString()).roundToInt() +
-                titleView.paddingLeft + titleView.paddingRight + titleLp.marginStart + titleLp.marginEnd
-        var used = 0
-        for (i in 0 until header.childCount) {
-            val child = header.getChildAt(i)
-            if (child.visibility == View.GONE || child === headerSpacer) continue
-            val lp = child.layoutParams as? LinearLayout.LayoutParams
-            // The natural width, not the measured one: an overflowing row squeezes its last children.
-            val natural = if ((lp?.width ?: 0) > 0) lp!!.width else {
-                val unspecified = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-                child.measure(unspecified, unspecified)
-                child.measuredWidth
-            }
-            used += natural + (lp?.marginStart ?: 0) + (lp?.marginEnd ?: 0)
-        }
-        val fits = if (titleView.isVisible) used <= available else used + titleNeed <= available
-        if (titleView.isVisible != fits) post { titleView.isVisible = fits }
     }
 
     private fun collapse(animate: Boolean) {

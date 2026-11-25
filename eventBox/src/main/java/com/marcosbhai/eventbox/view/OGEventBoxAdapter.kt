@@ -31,6 +31,8 @@ internal data class OGEventBoxRow(
     val event: OGEventBoxDebugEvent,
     /** Time since the previous entry in the full log, or null for the first one. */
     val deltaMs: Long?,
+    /** False when the header switch hides the "+1.2s" delta. */
+    val showDelta: Boolean,
     /** The newest entry in the whole log (green and bold). */
     val isLatest: Boolean,
     /** The last row shown, which has no divider below it. */
@@ -102,7 +104,7 @@ internal class OGEventBoxAdapter(
             text.text = SpannableStringBuilder().apply {
                 append(String.format(Locale.US, "%02d  ", event.index), palette.index)
                 append(palette.timeFormat.format(Date(event.timestampMillis)), palette.time)
-                val delta = OGEventBoxFormat.relativeTime(row.deltaMs)
+                val delta = if (row.showDelta) OGEventBoxFormat.relativeTime(row.deltaMs) else ""
                 if (delta.isNotEmpty()) append(" $delta", palette.index)
                 append("  ")
                 event.source?.let { source ->

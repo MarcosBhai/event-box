@@ -2,6 +2,25 @@
 
 All notable changes to Event Box. Install snippets are in the [README](README.md).
 
+## 1.0.7
+
+### Added
+- **Clock button in the header** shows or hides the `+1.2s` time since the previous event on every
+  row. It is green while the times are shown, confirms each change with a short toast, and the
+  choice is remembered on the device (default: shown). TalkBack reads it as "Show/Hide time since
+  previous event".
+
+### Changed
+- **Header**: `[Logo] [Count] … [Clock] [Search] [Pause] [Share] [Pin] [Clear]`, mirrored for a
+  right-side bubble. Header buttons are 35×44 dp and the logo is 35 dp, so the row fits on narrow
+  phones.
+
+### Removed
+- **`EVENTS` title** in the header. It already hid itself on narrow phones; the logo and count
+  identify the panel. The code that measured the header to hide it is gone too.
+
+No public API changes; upgrading from 1.0.6 needs no code changes.
+
 ## 1.0.6
 
 A simpler, safer panel. **This release removes two public APIs**; see

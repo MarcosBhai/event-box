@@ -18,9 +18,8 @@ Think of it as **Firebase DebugView on the device itself**: no adb, no USB cable
 - No permissions needed (the background overlay is optional and opt-in).
 - `minSdk 21`, pure Kotlin, works from Java too.
 
-> **New in 1.0.7:** a clock button in the header shows or hides the `+1.2s` time since the
-> previous event, and the header drops the `EVENTS` title to make room. See the
-> [changelog](CHANGELOG.md).
+> **New in 1.0.8:** rows for events with parameters get a teal stripe, so you can spot them
+> without expanding each row. See the [changelog](CHANGELOG.md).
 
 ## Why use Event Box?
 
@@ -53,7 +52,7 @@ parameters) are often found only after release.
 - **Fast list**: a RecyclerView that only redraws the rows that changed. The log size can be set
   from 10 to 1000 (200 by default), with an "N older events dropped" notice.
 - **Spot bugs fast**: back-to-back duplicates are merged into one row shown as `×N`, rows get a
-  colour stripe (amber = warning, blue = user property), `+1.2s` deltas, a key/value table with
+  colour stripe (amber = warning, blue = user property, teal = has parameters), `+1.2s` deltas, a key/value table with
   value types (`S`/`L`/`D`/`B`), and pause/resume.
 - **Source tags**: tell Firebase, AppsFlyer, Mixpanel and other events apart, and search by source.
 - **Resizable, pinnable panel**: drag the bottom handle to change the height (double-tap it to
@@ -91,7 +90,7 @@ dependencyResolutionManagement {
 
 ```kotlin
 dependencies {
-    implementation("com.github.MarcosBhai:event-box:1.0.7")
+    implementation("com.github.MarcosBhai:event-box:1.0.8")
 }
 ```
 
@@ -120,7 +119,7 @@ maven {
 }
 
 // app/build.gradle.kts
-implementation("com.marcosbhai:event-box:1.0.7")
+implementation("com.marcosbhai:event-box:1.0.8")
 ```
 
 </details>
@@ -131,8 +130,8 @@ Bump the fallback `version` in `eventBox/build.gradle.kts`, the install snippets
 [`CHANGELOG.md`](CHANGELOG.md), then push a version tag:
 
 ```bash
-git tag 1.0.7
-git push origin 1.0.7
+git tag 1.0.8
+git push origin 1.0.8
 ```
 
 - **JitPack** builds the tag the first time someone requests it (or open

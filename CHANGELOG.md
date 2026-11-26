@@ -2,6 +2,13 @@
 
 All notable changes to Event Box. Install snippets are in the [README](README.md).
 
+## 1.0.8
+
+### Added
+- **Teal stripe for events with parameters.** Rows now show a teal stripe when the event has at
+  least one parameter. Amber (warning) and blue (user property) still take priority; events with
+  no parameters keep no stripe.
+
 ## 1.0.7
 
 ### Added

@@ -1,6 +1,6 @@
 # Event Box: Improvement Plan
 
-> Current release: **1.0.7** (see [`CHANGELOG.md`](../CHANGELOG.md)). Status: 1.1.0 to 1.4.0 are implemented and released in 1.0.5 (not
+> Current release: **1.0.8** (see [`CHANGELOG.md`](../CHANGELOG.md)). Status: 1.1.0 to 1.4.0 are implemented and released in 1.0.5 (not
 > as separate versions). Every item is marked **✅ DONE**, except the few marked **⬜ NOT DONE** or
 > **⏳ PENDING** with the reason. Line references point at the code as of 1.0.4 and may move.
 > Items taken out again after 1.0.5 are marked **🗑 REMOVED**; see the next section.

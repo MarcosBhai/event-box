@@ -76,6 +76,7 @@ internal class OGEventBoxAdapter(
         val warning = ContextCompat.getColor(context, R.color.og_event_box_warning)
         val userProperty = ContextCompat.getColor(context, R.color.og_event_box_user_property)
         val source = ContextCompat.getColor(context, R.color.og_event_box_source)
+        val params = ContextCompat.getColor(context, R.color.og_event_box_params)
         val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.US)
     }
 
@@ -121,6 +122,7 @@ internal class OGEventBoxAdapter(
             val stripeColor = when {
                 event.hasWarning -> palette.warning
                 OGEventBoxQuery.isUserProperty(event) -> palette.userProperty
+                !event.params.isNullOrEmpty() -> palette.params
                 else -> null
             }
             stripe.visibility = if (stripeColor != null) View.VISIBLE else View.INVISIBLE
